@@ -39,6 +39,9 @@ This roadmap is broken into distinct, actionable phases. The AI coder will compl
     │   │   ├── data/               # Directory for game state files
     │   │   │   ├── character_miller.json
     │   │   │   └── zone_medbay_b.json
+    │   │   ├── prompts/
+    │   │   │   ├── actor.txt                   # Actor AI prompt (direct edit)
+    │   │   │   └── director.txt                # Director AI prompt (direct edit)
     │   │   ├── engine/
     │   │   │   ├── __init__.py
     │   │   │   ├── actor_agent.py

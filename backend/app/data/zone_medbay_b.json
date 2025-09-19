@@ -1,0 +1,12 @@
+{
+  "name": "Medbay B",
+  "description": "A sterile, white room. An emergency light flickers. The air smells of antiseptic.",
+  "exits": {
+    "north_door": {
+      "to": "corridor_3",
+      "status": "locked",
+      "panel": "smashed",
+      "extra_properties": {}
+    }
+  }
+}
