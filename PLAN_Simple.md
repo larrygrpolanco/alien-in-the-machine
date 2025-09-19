@@ -16,16 +16,15 @@ The core mechanic is a **Simple Threshold System** where the Director AI determi
 ## **Project Structure**
 
 ```
-/medbay_escape_prototype/
+/alien-in-the-machine/
 ├── backend/
-│   ├── .env.example                    # Environment variables
 │   ├── requirements.txt                # Python dependencies
 │   ├── data/
 │   │   ├── character_miller.json       # Character state
 │   │   └── zone_medbay_b.json         # Zone state
 │   ├── prompts/
-│   │   ├── actor.txt                   # Actor AI prompt (direct edit)
-│   │   └── director.txt                # Director AI prompt (direct edit)
+│   │   ├── actor_v1.txt                   # Actor AI prompt (direct edit)
+│   │   └── director_v1.txt                # Director AI prompt (direct edit)
 │   ├── app/
 │   │   ├── __init__.py
 │   │   ├── schemas.py                  # Pydantic data models

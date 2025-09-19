@@ -30,7 +30,7 @@ This roadmap is broken into distinct, actionable phases. The AI coder will compl
 
 1.  **Create the Project Directory Structure:**
     ```bash
-    /medbay_escape_prototype/
+    /alien-in-the-machine /
     ├── backend/
     │   ├── app/
     │   │   ├── __init__.py
@@ -40,8 +40,8 @@ This roadmap is broken into distinct, actionable phases. The AI coder will compl
     │   │   │   ├── character_miller.json
     │   │   │   └── zone_medbay_b.json
     │   │   ├── prompts/
-    │   │   │   ├── actor.txt                   # Actor AI prompt (direct edit)
-    │   │   │   └── director.txt                # Director AI prompt (direct edit)
+    │   │   │   ├── actor_v1.txt                   # Actor AI prompt (direct edit)
+    │   │   │   └── director_v1.txt                # Director AI prompt (direct edit)
     │   │   ├── engine/
     │   │   │   ├── __init__.py
     │   │   │   ├── actor_agent.py
@@ -49,7 +49,6 @@ This roadmap is broken into distinct, actionable phases. The AI coder will compl
     │   │   └── game_manager.py     # Game Loop Controller
     │   └── requirements.txt
     ├── frontend/                   # SvelteKit Project
-    └── .env.example                # For API Keys (e.g., OPENAI_API_KEY)
     ```
 
 2.  **Setup Backend Dependencies:**
