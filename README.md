@@ -226,14 +226,14 @@ World → Event Log → Context Assembly → LLM → Validation → World Update
 ---
 
 ## 9. Constitution Alignment
-This PRD aligns with ≥3 core principles from constitution.md:  
-- **Simplicity First (MVP Focus):** Limited to single mission, 6 zones, 6-8 actions; no complex features until post-MVP.  
-- **AI Autonomy:** Agents ignore orders based on stress (>7 triggers freeze) and personality (e.g., 70% compliance for Aggressive); prompts enforce independent reasoning.  
-- **TDD (Tests Before Code):** Enforced in all milestones (e.g., unit tests for event log, integration for agent actions); coverage ≥80%.  
-- **Event-Driven Integrity:** Immutable event log as single source of truth; all changes append-only for auditability.  
-- **Emergence Validation:** Require 20+ playthroughs in testing (T036) to verify ≥3 branches, ≥2 panic events in 50% sims.  
+This PRD aligns with all 5 core principles from constitution.md v1.0.0:
+- **Simplicity First (MVP Focus):** Limited to single mission, 6 zones, 6-8 actions; no complex features until post-MVP.
+- **AI Autonomy:** Agents ignore orders based on stress (>7 triggers freeze) and personality (e.g., 70% compliance for Aggressive); prompts enforce independent reasoning.
+- **TDD (Tests Before Code):** Enforced in all milestones (e.g., unit tests for event log, integration for agent actions); coverage ≥80%.
+- **Event-Driven Integrity:** Immutable event log as single source of truth; all changes append-only for auditability.
+- **Emergence Validation:** Require 20+ playthroughs in testing (T036) to verify ≥3 branches, ≥2 panic events in 50% sims.
 
-References: Principles integrated throughout; roadmap includes TDD gates. Alignment ensures MUST requirements (e.g., Performance Gates: <5s turns).
+References: Principles integrated throughout; roadmap includes TDD gates. Alignment ensures MUST requirements (e.g., Performance: <5s turns per constitution Non-Functional Requirements).
 
 ---
 

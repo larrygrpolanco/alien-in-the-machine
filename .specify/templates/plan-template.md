@@ -47,7 +47,11 @@
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- **Simplicity First**: Ensure MVP focus; limit to single mission, 6 zones, 6-8 actions; no complex features until post-MVP. Reject over-engineering.
+- **AI Autonomy**: Agents must act independently; prompts enforce reasoning without direct control; compliance varies by personality (70-90%).
+- **TDD (NON-NEGOTIABLE)**: All tests written and failing before implementation; Red-Green-Refactor cycle enforced; ≥80% coverage.
+- **Event-Driven Integrity**: Use immutable event log as single source of truth; all changes append-only for auditability.
+- **Emergence Validation**: Design must support ≥3 unique event branches per playthrough; require simulation tests (e.g., 20+ playthroughs).
 
 ## Project Structure
 
@@ -216,4 +220,4 @@ directories captured above]
 - [ ] Complexity deviations documented
 
 ---
-*Based on Constitution v2.1.1 - See `/memory/constitution.md`*
+*Based on Constitution v1.0.0 - See `/memory/constitution.md`*
