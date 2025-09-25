@@ -1,50 +1,86 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# Constitution for the Alien in the Machine Project
+
+## Introduction
+
+This constitution serves as the foundational guiding document for the Alien in the Machine project, a turn-based sci-fi command simulation built with SvelteKit and leveraging OpenRouter for AI agents (marines, alien, director). Its purpose is to ensure all project decisions align with the core vision of creating an event-driven world state that fosters emergent narratives through a terminal UI. By establishing enforceable principles, it promotes simplicity, AI autonomy, and quality, drawing directly from lessons in the Product Requirements Document (PRD.md): prioritizing AI logic over UI, maintaining MVP focus, avoiding over-engineering like complex ECS or Python integrations, and emphasizing test-driven development (TDD) for reliability.
+
+This document acts as a validation framework for specifications, plans, and tasks, ensuring tech-agnostic specs, phased implementation, and measurable outcomes. It supersedes conflicting instructions and must be referenced in all project phases.
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+The following principles are derived from PRD lessons and best practices. Each includes a name, description, and normative statements (using MUST for mandatory requirements and SHOULD for strong recommendations) to enable enforcement.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+1. **Simplicity First**  
+   Description: Prioritize a minimal viable product (MVP) to deliver core functionality quickly, avoiding over-engineering that could complicate maintenance or dilute the emergent narrative focus. This aligns with PRD emphasis on simplicity over complex systems like ECS.  
+   Normative Statements:  
+   - MUST limit features to essential MVP scope; any additions require justification in task specs.  
+   - SHOULD refactor code only after demonstrating necessity through simulations or tests.  
+   - MUST avoid introducing new dependencies unless they directly support AI autonomy or event-driven state.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+2. **AI Autonomy**  
+   Description: AI agents (marines, alien, director) must operate independently to generate emergent behaviors, with the commander providing only indirect control via high-level directives. This reflects PRD's lesson on AI-first design over UI-driven interactions.  
+   Normative Statements:  
+   - MUST implement agent decision-making logic without requiring constant human input; agents should act based on world state events.  
+   - SHOULD simulate agent autonomy in at least 10 playthroughs per feature to verify independent actions.  
+   - MUST prioritize agent logic development before any UI representations.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+3. **TDD Enforcement**  
+   Description: All development must follow test-driven practices to ensure reliability and prevent regressions in the simulation's complex interactions. This addresses the analysis finding of the empty placeholder constitution causing critical issues in validation.  
+   Normative Statements:  
+   - MUST write unit and integration tests before implementing any code; achieve 100% coverage for new features.  
+   - SHOULD use mocks for external dependencies like OpenRouter to enable fast, deterministic testing.  
+   - MUST fail builds or tasks if test coverage drops below 90% overall.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+4. **Event-Driven Integrity**  
+   Description: The world state must be managed as an append-only event log to support replayability, debugging, and emergent narratives, avoiding direct mutations that could lead to inconsistencies.  
+   Normative Statements:  
+   - MUST represent all state changes as immutable events in a centralized log.  
+   - SHOULD validate event logs for consistency after each simulation turn.  
+   - MUST prohibit direct state modifications outside the event system.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+5. **Tech Alignment**  
+   Description: Adhere to the PRD-specified stack (JavaScript, SvelteKit for UI, OpenRouter for AI) to maintain simplicity and compatibility; deviations must be justified to prevent scope creep.  
+   Normative Statements:  
+   - MUST use SvelteKit for all frontend components and routing.  
+   - SHOULD integrate OpenRouter exclusively for AI agent prompts; no alternative LLM providers without approval.  
+   - MUST document and justify any tech deviations in the spec.md for the affected task.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+6. **Emergence Validation**  
+   Description: Ensure emergent narratives arise naturally from agent interactions, validated through measurable outcomes rather than scripted events, per PRD's focus on simulation-driven storytelling.  
+   Normative Statements:  
+   - MUST define quantifiable metrics (e.g., narrative branches, agent conflict rates) for each feature.  
+   - SHOULD run 20+ automated playthroughs to validate emergence before task completion.  
+   - MUST reject features that fail to produce varied outcomes in simulations.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+7. **Performance Gates**  
+   Description: Maintain responsive gameplay by enforcing strict limits on AI processing to support turn-based flow without delays.  
+   Normative Statements:  
+   - MUST ensure OpenRouter API calls complete in under 5 seconds and use fewer than 2000 tokens per turn.  
+   - SHOULD optimize prompts for brevity and include token counts in test assertions.  
+   - MUST include performance benchmarks in integration tests, failing if thresholds are exceeded.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+8. **Accessibility**  
+   Description: Design the terminal UI to be inclusive, supporting keyboard navigation and high-contrast visuals to broaden accessibility in a sci-fi command simulation.  
+   Normative Statements:  
+   - MUST implement full keyboard navigation for all interactive elements, compliant with WCAG 2.1 Level AA.  
+   - SHOULD use high-contrast color schemes (contrast ratio ≥ 4.5:1) for terminal output.  
+   - MUST test accessibility with tools like axe-core before deployment.
 
-## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
+## Quality Gates
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+These checkpoints must be passed at each project phase to enforce the constitution:
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+- **Specification Phase**: Tech-agnostic spec.md must reference at least 3 core principles; plan.md must outline TDD and validation steps.  
+- **Implementation Phase**: Before code commit, achieve 100% test coverage and pass emergence simulations (20+ playthroughs). Event logs must be verifiable.  
+- **Review Phase**: Performance gates met (e.g., <5s LLM response); accessibility audit passed. No violations of normative statements.  
+- **Deployment Phase**: Full integration tests confirm AI autonomy and event integrity; user playthroughs validate narratives.
+
+Failure at any gate requires rework and re-validation.
+
+## Amendment Process
+
+This constitution is foundational and may only be amended with explicit user approval. Proposals must:  
+- Be documented in a dedicated PRD update or spec.md.  
+- Demonstrate how changes align with the project vision (e.g., via PRD references).  
+- Pass a review gate including simulation validation of impacts.  
+Amendments take effect only after user confirmation in a commit message or task approval.
