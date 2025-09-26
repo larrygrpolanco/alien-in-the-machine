@@ -5,5 +5,16 @@ yarn.lock
 bun.lock
 bun.lockb
 
+# Environment
+.env*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Builds
+dist/
+build/
+
 # Miscellaneous
 /static/
