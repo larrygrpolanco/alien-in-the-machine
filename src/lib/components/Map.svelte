@@ -24,7 +24,10 @@
     };
   });
 
-  $: zones = worldState.zones || {};
+  $: zones = Object.fromEntries(
+    Object.entries(worldState.zones || {})
+      .filter(([key, value]) => key && value && typeof value === 'object')
+  );
 
   // ARIA labels for screen readers
   $: mapAriaLabel = `Interactive map showing current agent positions and zone connections. Current turn: ${getCurrentTurn()}.`;
@@ -38,8 +41,9 @@
   </div>
 
   <svg class="game-map" width="800" height="600" aria-hidden="true">
-    {#each Object.entries(zones) as { key: zoneName, value: zone } (zoneName)}
-      <g class="zone" data-zone={zoneName}>
+    {#each Object.entries(zones) as [zoneName, zone] (zoneName)}
+      {#if zoneName && zone}
+        <g class="zone" data-zone={zoneName}>
         <rect 
           x={zone.x || 0} 
           y={zone.y || 0} 
@@ -69,7 +73,8 @@
             />
           {/each}
         {/if}
-      </g>
+        </g>
+      {/if}
     {/each}
   </svg>
 

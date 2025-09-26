@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 import type { RequestHandler } from './$types';
 
 const apiKey = process.env.OPENROUTER_API_KEY;
+const defaultModel = process.env.DEFAULT_LLM_MODEL || 'deepseek/deepseek-chat-v3.1:free';
 
 let openai: OpenAI | null = null;
 if (apiKey) {
@@ -44,7 +45,7 @@ interface LLMResponse {
   reasoning: string;
 }
 
-const callLLM = async (prompt: string, model: string = 'gpt-4o-mini'): Promise<LLMResponse> => {
+const callLLM = async (prompt: string, model: string = defaultModel): Promise<LLMResponse> => {
   // Mock mode for tests (no API key)
   if (!apiKey) {
     console.log('Using mock LLM mode (no API key)');
@@ -94,7 +95,11 @@ Choose only valid actions based on the game context provided in the user message
       max_tokens: 150,
       stream: false
     }, {
-      signal: controller.signal
+      signal: controller.signal,
+      headers: {
+        'HTTP-Referer': 'http://localhost:5173', // Optional: for OpenRouter leaderboards
+        'X-Title': 'Alien in the Machine' // Optional: for OpenRouter leaderboards
+      }
     });
 
     clearTimeout(timeoutId);
@@ -170,7 +175,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
 export const checkLLMConnection = async (): Promise<boolean> => {
   try {
-    await callLLM('Say "connection successful"', 'gpt-4o-mini');
+    await callLLM('Say "connection successful"', defaultModel);
     return true;
   } catch {
     return false;

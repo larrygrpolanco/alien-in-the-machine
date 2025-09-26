@@ -17,7 +17,7 @@ export const generateAgentAction = async (
   const prompt = assemblePrompt(promptContext);
   
   // Call LLM via OpenRouter (uses env key or mock automatically)
-  const llmResponse: LLMResponse = await callLLM(prompt, 'gpt-4o-mini');
+  const llmResponse: LLMResponse = await callLLM(prompt);
   
   // Determine agent type for validation
   let agentType: 'marine' | 'alien' | 'director';

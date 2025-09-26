@@ -43,12 +43,15 @@ export const ZoneSchema = z.object({
 
 export interface Zone {
   name: string;
+  x?: number;
+  y?: number;
   connections: string[];
   items?: Record<string, Item>;
   branches?: string[];
   door?: Item;
   console?: Item;
   alienStart?: boolean;
+  dangerous?: boolean;
 }
 
 // Agent schemas

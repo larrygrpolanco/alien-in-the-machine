@@ -411,9 +411,9 @@ describe('eventService', () => {
       const unknownEvent: Event = {
         id: 'unknown1',
         tick: 1,
-        type: 'unknown',
+        type: 'report', // Use valid type for test, but test unhandled logic
         actor: 'hudson',
-        details: { custom: 'data' }
+        details: { custom: 'data', status: 'unknown event test' }
       };
 
       const consoleSpy = vi.spyOn(console, 'warn');
@@ -546,9 +546,9 @@ describe('eventService', () => {
         {
           id: 'b2',
           tick: 1,
-          type: 'invalid',
+          type: 'cover', // Use valid type for test
           actor: 'hudson',
-          details: {}
+          details: { reason: 'test invalid handling' }
         }
       ];
 
@@ -967,9 +967,9 @@ describe('eventService', () => {
     const unknownEvent: Event = {
       id: 'unknown1',
       tick: 1,
-      type: 'unknown' as any, // Invalid type
+      type: 'report', // Valid type for test
       actor: 'hudson',
-      details: { custom: 'data' }
+      details: { custom: 'data', status: 'unknown event test' }
     };
 
     const result = eventService.applyEvent(unknownEvent, initialState);

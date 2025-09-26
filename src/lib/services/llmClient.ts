@@ -6,7 +6,7 @@ export interface LLMResponse {
 
 export const callLLM = async (
   prompt: string,
-  model: 'gpt-4o-mini' = 'gpt-4o-mini'
+  model: string = 'deepseek/deepseek-chat-v3.1:free'
 ): Promise<LLMResponse> => {
   const controller = new AbortController();
   
@@ -59,7 +59,7 @@ export const callLLM = async (
 // Health check function
 export const checkLLMConnection = async (): Promise<boolean> => {
   try {
-    await callLLM('Say "connection successful"', 'gpt-4o-mini');
+    await callLLM('Say "connection successful"', 'deepseek/deepseek-chat-v3.1:free');
     return true;
   } catch {
     return false;
