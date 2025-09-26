@@ -4,15 +4,24 @@ import type { Item, Zone, Agent } from './entities';
 // Event types enum
 const EventType = z.enum([
   'move',
-  'search',
   'interact',
   'attack',
   'cover',
   'report',
   'sneak',
+  'stalk',
   'ambush',
+  'hide',
+  'hunt',
+  'lurk',
   'hazard',
-  'message'
+  'escalate',
+  'nudge',
+  'reveal',
+  'isolate',
+  'panic',
+  'message',
+  'search'
 ]);
 
 // Details and result as flexible objects (z.record for any key-value)

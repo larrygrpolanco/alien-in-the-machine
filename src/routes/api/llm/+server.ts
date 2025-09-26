@@ -173,7 +173,7 @@ export const POST: RequestHandler = async ({ request }) => {
   }
 };
 
-export const checkLLMConnection = async (): Promise<boolean> => {
+export const _checkLLMConnection = async (): Promise<boolean> => {
   try {
     await callLLM('Say "connection successful"', defaultModel);
     return true;

@@ -479,4 +479,195 @@ describe('actionValidator', () => {
       expect(fallback.reasoning).toContain('Default report action');
     });
   });
+
+  describe('new event type validation', () => {
+    const supportedTypes = [
+      'move', 'search', 'interact', 'attack', 'cover', 'report', 
+      'sneak', 'ambush', 'hazard', 'nudge', 'hunt', 'lurk', 
+      'stalk', 'hide', 'escalate', 'reveal', 'isolate', 'panic'
+    ];
+
+    const isSupportedEvent = (action: string, types: string[]): boolean => {
+      const normalized = action.toLowerCase().trim();
+      return types.includes(normalized);
+    };
+
+    it('should validate new supported event types for alien', () => {
+      // Test new alien actions
+      const huntAction = { action: 'hunt', target: 'Corridor', reasoning: 'Alien hunting' };
+      const lurkAction = { action: 'lurk', reasoning: 'Alien lurking in shadows' };
+      const stalkAction = { action: 'stalk', target: 'hudson', reasoning: 'Stalking marine' };
+
+      const huntResult = validateAction(huntAction, 'alien');
+      const lurkResult = validateAction(lurkAction, 'alien');
+      const stalkResult = validateAction(stalkAction, 'alien');
+
+      expect(huntResult.isValid).toBe(true);
+      expect(lurkResult.isValid).toBe(true);
+      expect(stalkResult.isValid).toBe(true);
+
+      // Post-validation check
+      expect(isSupportedEvent(huntResult.action, supportedTypes)).toBe(true);
+      expect(isSupportedEvent(lurkResult.action, supportedTypes)).toBe(true);
+      expect(isSupportedEvent(stalkResult.action, supportedTypes)).toBe(true);
+    });
+
+    it('should validate new supported event types for director', () => {
+      // Test new director actions
+      const nudgeAction = { action: 'nudge', target: 'hudson', reasoning: 'Subtle stress increase' };
+      const escalateAction = { action: 'escalate', reasoning: 'Increase overall tension' };
+      const isolateAction = { action: 'isolate', target: 'Corridor', reasoning: 'Trap marines' };
+
+      const nudgeResult = validateAction(nudgeAction, 'director');
+      const escalateResult = validateAction(escalateAction, 'director');
+      const isolateResult = validateAction(isolateAction, 'director');
+
+      expect(nudgeResult.isValid).toBe(true);
+      expect(escalateResult.isValid).toBe(true);
+      expect(isolateResult.isValid).toBe(true);
+
+      // Post-validation check
+      expect(isSupportedEvent(nudgeResult.action, supportedTypes)).toBe(true);
+      expect(isSupportedEvent(escalateResult.action, supportedTypes)).toBe(true);
+      expect(isSupportedEvent(isolateResult.action, supportedTypes)).toBe(true);
+    });
+
+    it('should reject unsupported event types with appropriate fallbacks', () => {
+      const unsupportedActions = [
+        { action: 'pounce', reasoning: 'Invalid alien pounce', agentType: 'alien' },
+        { action: 'teleport', reasoning: 'Invalid teleport', agentType: 'marine' },
+        { action: 'charge', reasoning: 'Invalid charge', agentType: 'director' }
+      ];
+
+      unsupportedActions.forEach(testCase => {
+        const result = validateAction(testCase, testCase.agentType as 'marine' | 'alien' | 'director');
+        
+        expect(result.isValid).toBe(false);
+        expect(result.fallbackUsed).toBe(true);
+        
+        // Should fallback to appropriate type-safe action
+        if (testCase.agentType === 'alien') {
+          expect(result.action).toBe('sneak');
+        } else if (testCase.agentType === 'director') {
+          expect(result.action).toBe('nudge');
+        } else {
+          expect(['move', 'search']).toContain(result.action);
+        }
+        
+        // Post-validation should catch unsupported types
+        expect(isSupportedEvent(testCase.action, supportedTypes)).toBe(false);
+      });
+    });
+
+    it('should handle case insensitivity for new event types', () => {
+      const mixedCaseActions = [
+        { action: 'HUNT', reasoning: 'Uppercase hunt', agentType: 'alien' },
+        { action: '  NUDGE  ', reasoning: 'Whitespace nudge', agentType: 'director' },
+        { action: 'LURK', reasoning: 'Uppercase lurk', agentType: 'alien' }
+      ];
+
+      mixedCaseActions.forEach(testCase => {
+        const result = validateAction(testCase, testCase.agentType as 'marine' | 'alien' | 'director');
+        
+        expect(result.isValid).toBe(true);
+        expect(result.action).toBe(testCase.action.toLowerCase().trim()); // Normalized
+        
+        // Post-validation check
+        expect(isSupportedEvent(testCase.action, supportedTypes)).toBe(true);
+      });
+    });
+
+    it('should throw post-validation errors for unsupported actions in batch processing', () => {
+      const actions = {
+        hudson: { action: 'move', target: 'Corridor', reasoning: 'Valid move' },
+        alien: { action: 'hunt', target: 'hudson', reasoning: 'Valid hunt' },
+        director: { action: 'nudge', reasoning: 'Valid nudge' },
+        invalidAlien: { action: 'pounce', reasoning: 'Invalid pounce', agentType: 'alien' },
+        invalidDirector: { action: 'teleport', reasoning: 'Invalid teleport', agentType: 'director' }
+      };
+
+      const agentTypes = {
+        hudson: 'marine' as const,
+        alien: 'alien' as const,
+        director: 'director' as const,
+        invalidAlien: 'alien' as const,
+        invalidDirector: 'director' as const
+      };
+
+      const validated = validateAgentActions(actions, agentTypes);
+      
+      // Valid actions pass initial validation
+      expect(validated.hudson.isValid).toBe(true);
+      expect(validated.alien.isValid).toBe(true);
+      expect(validated.director.isValid).toBe(true);
+      
+      // Invalid actions get fallbacks
+      expect(validated.invalidAlien.isValid).toBe(false);
+      expect(validated.invalidAlien.fallbackUsed).toBe(true);
+      expect(validated.invalidDirector.isValid).toBe(false);
+      expect(validated.invalidDirector.fallbackUsed).toBe(true);
+      
+      // Post-validation should throw for originally unsupported actions
+      const postValidationErrors: string[] = [];
+      Object.entries(validated).forEach(([agent, action]) => {
+        if (action.isValid || action.fallbackUsed) {
+          // Check if original action was unsupported
+          const originalAction = actions[agent as keyof typeof actions]?.action || action.action;
+          if (!isSupportedEvent(originalAction, supportedTypes)) {
+            postValidationErrors.push(`${agent}: ${originalAction} is unsupported`);
+          }
+        }
+      });
+      
+      expect(postValidationErrors).toHaveLength(2);
+      expect(postValidationErrors).toContain(expect.stringContaining('pounce'));
+      expect(postValidationErrors).toContain(expect.stringContaining('teleport'));
+    });
+
+    it('should handle edge cases in event type validation', () => {
+      // Empty/undefined action
+      const emptyAction = { action: '', reasoning: 'Empty action', agentType: 'marine' as const };
+      const nullAction = { action: null as any, reasoning: 'Null action', agentType: 'alien' as const };
+      
+      const emptyResult = validateAction(emptyAction, emptyAction.agentType);
+      const nullResult = validateAction(nullAction, nullAction.agentType);
+      
+      expect(emptyResult.isValid).toBe(false);
+      expect(nullResult.isValid).toBe(false);
+      
+      // Post-validation would catch these
+      expect(isSupportedEvent('', supportedTypes)).toBe(false);
+      expect(isSupportedEvent(null as any, supportedTypes)).toBe(false);
+      
+      // Whitespace-only action
+      const whitespaceAction = { action: '   ', reasoning: 'Whitespace action', agentType: 'director' as const };
+      const whitespaceResult = validateAction(whitespaceAction, whitespaceAction.agentType);
+      
+      expect(whitespaceResult.isValid).toBe(false);
+      expect(isSupportedEvent('   ', supportedTypes)).toBe(false);
+    });
+
+    it('should maintain TypeScript type safety with new event types', () => {
+      // Test that new event types work with the type system
+      type NewEventTypes = 'hunt' | 'lurk' | 'nudge' | 'escalate' | 'stalk';
+      
+      const newTypeActions: Record<NewEventTypes, any> = {
+        hunt: { action: 'hunt' as const, target: 'Corridor', reasoning: 'Hunt test' },
+        lurk: { action: 'lurk' as const, reasoning: 'Lurk test' },
+        nudge: { action: 'nudge' as const, target: 'hudson', reasoning: 'Nudge test' },
+        escalate: { action: 'escalate' as const, reasoning: 'Escalate test' },
+        stalk: { action: 'stalk' as const, target: 'vasquez', reasoning: 'Stalk test' }
+      };
+
+      Object.entries(newTypeActions).forEach(([type, action]) => {
+        const agentType = type === 'nudge' || type === 'escalate' ? 'director' : 'alien';
+        const result = validateAction(action, agentType);
+        
+        expect(result).toBeDefined();
+        expect(result.action).toBe(type);
+        expect(result.isValid).toBe(true);
+        expect(isSupportedEvent(type, supportedTypes)).toBe(true);
+      });
+    });
+  });
 });

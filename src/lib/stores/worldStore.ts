@@ -34,6 +34,102 @@ function applyEventToState(event: Event, state: Entities): void {
         }
       }
       break;
+
+    case 'nudge':
+      // Subtle Director action - increment marine stress in target area
+      if (event.target) {
+        const targetMarine = state.agents.marines.find(m => m.id === event.target || m.position === event.target);
+        if (targetMarine) {
+          targetMarine.stress = Math.min(10, targetMarine.stress + (0.5 + Math.random() * 0.5));
+        }
+      }
+      break;
+
+    case 'hunt':
+      // Alien pursuit - move toward nearest marine, reduce hidden, increase stress
+      if (event.target) {
+        state.agents.alien.position = event.target;
+        state.agents.alien.hidden = false;
+        const targetMarine = state.agents.marines.find(m => m.id === event.target || m.position === event.target);
+        if (targetMarine) {
+          targetMarine.stress = Math.min(10, targetMarine.stress + 1);
+        }
+      }
+      break;
+
+    case 'lurk':
+      // Alien stealth - set hidden, no position change
+      state.agents.alien.hidden = true;
+      // Log awareness (handled via console for now)
+      console.log('Alien lurking, awareness increased');
+      break;
+
+    case 'stalk':
+      // Similar to hunt but stealthier - partial move + monitor
+      if (event.target) {
+        state.agents.alien.position = event.target; // Partial move to target
+        // Maintain some hidden status
+        if (Math.random() > 0.5) {
+          state.agents.alien.hidden = true;
+        }
+      }
+      break;
+
+    case 'hide':
+      // Set hidden for agent (only alien has hidden prop)
+      if (event.actor === 'alien') {
+        state.agents.alien.hidden = true;
+      } else {
+        // For marines, increase stress as proxy for hiding
+        const marine = state.agents.marines.find(m => m.id === event.actor);
+        if (marine) {
+          marine.stress = Math.min(10, marine.stress + 0.5);
+        }
+      }
+      break;
+
+    case 'escalate':
+      // Increase global tension/stress, trigger alerts
+      state.agents.marines.forEach(marine => {
+        marine.stress = Math.min(10, marine.stress + 1);
+      });
+      // Global alert (could set state.tension += 1 if added to Entities)
+      console.log('Escalation: Global tension increased');
+      break;
+
+    case 'reveal':
+      // Set hidden false for agents (only alien has hidden prop)
+      state.agents.alien.hidden = false;
+      // For marines, reduce stress as proxy for reveal
+      state.agents.marines.forEach(marine => {
+        marine.stress = Math.max(0, marine.stress - 0.5);
+      });
+      break;
+
+    case 'isolate':
+      // Block marine movement in zone, increase isolation stress
+      if (event.target) {
+        const targetMarine = state.agents.marines.find(m => m.id === event.target);
+        if (targetMarine) {
+          targetMarine.stress = Math.min(10, targetMarine.stress + 1.5);
+          targetMarine.position = event.target; // Lock to zone
+        }
+      }
+      break;
+
+    case 'panic':
+      // Boost marine stress, random flee
+      if (event.target) {
+        const targetMarine = state.agents.marines.find(m => m.id === event.target);
+        if (targetMarine) {
+          targetMarine.stress = Math.min(10, targetMarine.stress + (2 + Math.random() * 1));
+          // Random flee: move to adjacent zone (simplified)
+          const zones = Object.keys(state.zones);
+          const randomZone = zones[Math.floor(Math.random() * zones.length)];
+          targetMarine.position = randomZone;
+        }
+      }
+      break;
       
     case 'search':
       // Update item state to empty if searched

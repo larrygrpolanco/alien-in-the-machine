@@ -15,6 +15,7 @@ import { generateEventId } from '../models/eventSchema';
 
 // Turn counter
 let currentTick = 0;
+let subTick = 0; // Sub-tick for ordering within a turn
 
 // Compliance probability calculation
 const calculateCompliance = (personality: string, stress: number): number => {
@@ -132,6 +133,7 @@ const agentTypeToActorName = (agent: Agent): string => {
 // Main turn advancement function
 export const advanceTurn = async (commanderMsg: string = ''): Promise<void> => {
   currentTick++;
+  subTick = 0; // Reset sub-tick for new turn
   
   const agents = get(agentStore);
   const worldState = get(worldStore);
@@ -145,12 +147,12 @@ export const advanceTurn = async (commanderMsg: string = ''): Promise<void> => {
     // Phase 1: Director acts first (environmental control)
     console.log('Director turn...');
     const directorZone = worldState.zones['Command']; // Director "observes" from Command
-    await processAgentTurn(agents.director, directorZone, commanderMsg, currentTick, 'director');
+    await processAgentTurn(agents.director, directorZone, commanderMsg, currentTick * 100 + subTick++, 'director');
     
     // Phase 2: Alien acts (stealth predator)
     console.log('Alien turn...');
     const alienZone = worldState.zones[agents.alien.position];
-    await processAgentTurn(agents.alien, alienZone, commanderMsg, currentTick, 'alien');
+    await processAgentTurn(agents.alien, alienZone, commanderMsg, currentTick * 100 + subTick++, 'alien');
     
     // Phase 3: Marines act (by speed/initiative order)
     console.log('Marine turns...');
@@ -169,7 +171,7 @@ export const advanceTurn = async (commanderMsg: string = ''): Promise<void> => {
       }
       
       const marineZone = worldState.zones[marine.position];
-      await processAgentTurn(marine, marineZone, commanderMsg, currentTick, 'marine');
+      await processAgentTurn(marine, marineZone, commanderMsg, currentTick * 100 + subTick++, 'marine');
       
       // Small delay between marine actions for readability
       await new Promise(resolve => setTimeout(resolve, 100));

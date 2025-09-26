@@ -14,13 +14,13 @@
 
 <div class="message-stream-container" bind:this={container}>
   <ul class="message-list" bind:this={messageList} role="log" aria-live="polite">
-    {#each messages as message (message.timestamp)}
+    {#each messages as message, index (message.timestamp + '-' + index)}
       <li class="message-item" role="log" aria-label="{message.sender} message">
         <span class="timestamp">
-          [{new Date(message.timestamp).toLocaleTimeString([], { 
-            hour: '2-digit', 
-            minute: '2-digit', 
-            second: '2-digit' 
+          [{new Date(message.timestamp).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
           })}]
         </span>
         <span class="sender">{message.sender}:</span>

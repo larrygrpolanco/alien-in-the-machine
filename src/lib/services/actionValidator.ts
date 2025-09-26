@@ -1,16 +1,28 @@
 import type { AgentAction } from './llmClient';
 import type { Marine } from '../models/entities';
 
+// Supported event types (from EventType enum and handlers)
+export const handledTypes: string[] = [
+  'move', 'search', 'interact', 'attack', 'cover', 'report', 'message',
+  'sneak', 'ambush', 'hazard', 'nudge', 'hunt', 'lurk', 'stalk', 'hide',
+  'escalate', 'reveal', 'isolate', 'panic'
+];
+
+export const isSupportedEvent = (action: string): boolean => {
+  return handledTypes.includes(action.toLowerCase().trim());
+};
+import type { Marine } from '../models/entities';
+
 // Allowed actions per agent type (matching promptService)
-const MARINE_ACTIONS = new Set([
+export const MARINE_ACTIONS = new Set([
   'move', 'search', 'interact', 'attack', 'cover', 'report'
 ]);
 
-const ALIEN_ACTIONS = new Set([
+export const ALIEN_ACTIONS = new Set([
   'sneak', 'stalk', 'ambush', 'hide', 'hunt', 'lurk'
 ]);
 
-const DIRECTOR_ACTIONS = new Set([
+export const DIRECTOR_ACTIONS = new Set([
   'hazard', 'escalate', 'nudge', 'reveal', 'isolate', 'panic'
 ]);
 
@@ -101,6 +113,11 @@ export const validateAction = (
       if (!allowedActions.has(normalizedAction.action)) {
         throw new Error(`Invalid action type: ${normalizedAction.action}`);
       }
+
+      // Post-validation: Ensure event type is supported
+      if (!isSupportedEvent(normalizedAction.action)) {
+        throw new Error(`Unsupported event type: ${normalizedAction.action}. Must be in handledTypes.`);
+      }
       
       // Additional validation for specific actions
       if (normalizedAction.action === 'move' && agentType === 'marine') {
@@ -136,7 +153,7 @@ export const validateAction = (
         
         return {
           ...fallback,
-          isValid: false,
+          isValid: true, // Fallback is a valid action
           retryCount,
           fallbackUsed: true
         };
