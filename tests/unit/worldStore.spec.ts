@@ -32,6 +32,43 @@ describe('worldStore', () => {
     expect(initialState.agents.alien.hidden).toBe(true);
   });
 
+  it('should create agents with default inventory structure after validation', () => {
+    mockEventStore.set([]);
+    const state: Entities = get(worldStore);
+    
+    // Verify marines have inventory as array (from schema)
+    expect(Array.isArray(state.agents.marines[0].inventory)).toBe(true);
+    expect(state.agents.marines[0].inventory).toEqual([]);
+    
+    // Verify alien and director have validated inventory structure { items: [] }
+    const anyAlien = state.agents.alien as any;
+    expect(anyAlien.inventory).toEqual({ items: [] });
+    
+    const anyDirector = state.agents.director as any;
+    expect(anyDirector.inventory).toEqual({ items: [] });
+  });
+
+  it('should maintain inventory structure after event processing', () => {
+    const events: Event[] = [
+      { id: 'e1', tick: 1, type: 'move', actor: 'hudson', target: 'Shuttle Bay', details: {} },
+      { id: 'e2', tick: 2, type: 'interact', actor: 'hudson', target: 'vial', details: { zone: 'Medbay' } }
+    ];
+    
+    mockEventStore.set(events);
+    const state: Entities = get(worldStore);
+    
+    // Marine inventory should still be array after events
+    const hudson = state.agents.marines.find(m => m.id === 'hudson');
+    expect(Array.isArray(hudson?.inventory)).toBe(true);
+    
+    // Non-marine agents should maintain { items: [] } structure
+    const anyAlien = state.agents.alien as any;
+    expect(anyAlien.inventory).toEqual({ items: [] });
+    
+    const anyDirector = state.agents.director as any;
+    expect(anyDirector.inventory).toEqual({ items: [] });
+  });
+
   it('should apply move event to update marine position', () => {
     const moveEvent: Event = {
       id: 'move1',

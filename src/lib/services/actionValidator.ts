@@ -11,7 +11,6 @@ export const handledTypes: string[] = [
 export const isSupportedEvent = (action: string): boolean => {
   return handledTypes.includes(action.toLowerCase().trim());
 };
-import type { Marine } from '../models/entities';
 
 // Allowed actions per agent type (matching promptService)
 export const MARINE_ACTIONS = new Set([
@@ -73,11 +72,13 @@ export interface ValidatedAction extends AgentAction {
 }
 
 export const validateAction = (
-  rawAction: any, 
+  rawAction: any,
   agentType: 'marine' | 'alien' | 'director',
   personality?: string,
   stress?: number,
-  maxRetries: number = 3
+  agentName?: string,
+  turnNumber?: number,
+  maxRetries: number = 2
 ): ValidatedAction => {
   let retryCount = 0;
   let parsedAction: AgentAction | null = null;
@@ -99,11 +100,26 @@ export const validateAction = (
       }
       
       // Normalize target (null/undefined -> undefined)
-      const normalizedAction: AgentAction = {
+      let normalizedAction: AgentAction = {
         action: parsedAction.action.trim().toLowerCase(),
         target: parsedAction.target || undefined,
         reasoning: parsedAction.reasoning
       };
+
+      // Fallback mappings for common invalid actions
+      const actionMappings: Record<string, string> = {
+        'message': agentType === 'director' || agentType === 'alien' ? 'nudge' : 'report',
+        'search': agentType === 'alien' ? 'sneak' : 'search',
+        'communicate': 'report',
+        'investigate': 'search',
+        'default': agentType === 'marine' ? 'report' : agentType === 'alien' ? 'sneak' : 'nudge'
+      };
+
+      const lowerAction = normalizedAction.action.toLowerCase().trim();
+      if (actionMappings[lowerAction]) {
+        normalizedAction.action = actionMappings[lowerAction];
+        console.log(`[VALIDATION MAP] ${agentName || 'Unknown'}: Mapped '${lowerAction}' to '${normalizedAction.action}' (turn ${turnNumber || 'N/A'})`);
+      }
       
       // Validate action type against allowed actions
       const allowedActions = agentType === 'marine' ? MARINE_ACTIONS :
@@ -147,7 +163,7 @@ export const validateAction = (
       
       if (retryCount >= maxRetries) {
         // Use fallback after max retries
-        console.warn(`Action validation failed after ${maxRetries} attempts: ${error.message}`);
+        console.warn(`[${agentName || 'Unknown'}] Action validation failed after ${maxRetries} attempts (turn ${turnNumber || 'N/A'}): ${error.message}`);
         const fallback = getFallbackAction(agentType, personality, stress);
         fallbackUsed = true;
         
@@ -160,7 +176,7 @@ export const validateAction = (
       }
       
       // Log retry attempt
-      console.log(`Action validation attempt ${retryCount} failed: ${error.message}. Retrying...`);
+      console.log(`[${agentName || 'Unknown'}] Action validation attempt ${retryCount} failed (turn ${turnNumber || 'N/A'}): ${error.message}. Retrying...`);
       
       // For retry, we could modify the rawAction (e.g., add more context),
       // but for now just retry with same input

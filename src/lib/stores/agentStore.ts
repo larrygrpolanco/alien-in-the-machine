@@ -2,6 +2,36 @@ import { derived, get } from 'svelte/store';
 import { worldStore } from './worldStore';
 import type { Entities, Marine, Alien, Director } from '../models/entities';
 
+// Ensure agent has initialized location and inventory
+export const ensureAgentDefaults = (agent: any): void => {
+  let locationChanged = false;
+  if (!agent.location) {
+    agent.location = { id: 'default', items: [] };
+    locationChanged = true;
+  } else if (!agent.location.items) {
+    agent.location.items = [];
+    locationChanged = true;
+  }
+
+  let inventoryChanged = false;
+  if (!agent.inventory) {
+    agent.inventory = [];
+    inventoryChanged = true;
+  }
+
+  if (locationChanged) {
+    console.debug(`[AGENTSTORE] Initialized missing location for agent:`, agent);
+  }
+  if (inventoryChanged) {
+    console.debug(`[AGENTSTORE] Initialized missing inventory for agent:`, agent);
+  }
+
+  // For marines specifically
+  if ('id' in agent && !('position' in agent)) {
+    agent.position = agent.location.id;
+  }
+};
+
 export interface AgentsState {
   marines: Marine[];
   alien: Alien;
@@ -9,6 +39,11 @@ export interface AgentsState {
 }
 
 export const agentStore = derived(worldStore, ($world: Entities) => {
+  // Apply defaults to ensure no undefined states
+  $world.agents.marines.forEach(ensureAgentDefaults);
+  ensureAgentDefaults($world.agents.alien);
+  ensureAgentDefaults($world.agents.director);
+
   return {
     marines: $world.agents.marines,
     alien: $world.agents.alien,

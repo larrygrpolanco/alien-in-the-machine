@@ -1,7 +1,7 @@
 import { derived, get } from 'svelte/store';
 import { eventStore } from './eventStore';
 import type { Event } from '../models/eventSchema';
-import { initialEntities, type Entities } from '../models/entities';
+import { initialEntities, validateAgent, type Agent, type Entities } from '../models/entities';
 
 export const worldStore = derived(eventStore, ($events: Event[]) => {
   // Start with initial state
@@ -11,6 +11,11 @@ export const worldStore = derived(eventStore, ($events: Event[]) => {
   $events.forEach(event => {
     applyEventToState(event, currentState);
   });
+
+  // Validate all agents for completeness (ensure inventory etc.)
+  currentState.agents.marines.forEach((marine: Agent) => validateAgent(marine));
+  validateAgent(currentState.agents.alien);
+  validateAgent(currentState.agents.director);
   
   return currentState;
 });

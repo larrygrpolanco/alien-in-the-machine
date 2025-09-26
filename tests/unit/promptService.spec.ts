@@ -134,6 +134,73 @@ describe('promptService', () => {
       expect(prompt).toContain('Visible Items: none');
     });
 
+    it('should handle undefined agent inventory with defensive defaults', () => {
+      const agentWithoutInventory = { ...mockMarine, inventory: undefined };
+      const contextWithoutInventory: PromptContext = {
+        ...mockContext,
+        agent: agentWithoutInventory as any
+      };
+
+      // Mock console.warn to verify warning logged
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      
+      const prompt = assemblePrompt(contextWithoutInventory);
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[PROMPT] Missing inventory for agent hudson')
+      );
+      
+      // Should not throw TypeError, continue with default empty inventory
+      expect(prompt).toContain('Inventory: empty');
+      expect(prompt).toContain('You are hudson');
+      
+      // Agent should now have default inventory structure
+      const anyAgent = agentWithoutInventory as any;
+      expect(anyAgent.inventory).toEqual({ items: [] });
+      
+      consoleWarnSpy.mockRestore();
+    });
+
+    it('should handle invalid inventory structure and normalize', () => {
+      const agentWithInvalidInventory = { ...mockMarine, inventory: 'invalid' };
+      const contextWithInvalid: PromptContext = {
+        ...mockContext,
+        agent: agentWithInvalidInventory as any
+      };
+
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      
+      const prompt = assemblePrompt(contextWithInvalid);
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[PROMPT] Invalid inventory for agent hudson:')
+      );
+      
+      expect(prompt).toContain('Inventory: empty');
+      
+      // Should normalize to proper structure
+      const anyAgent = agentWithInvalidInventory as any;
+      expect(anyAgent.inventory).toEqual({ items: [] });
+      
+      consoleWarnSpy.mockRestore();
+    });
+
+    it('should handle array inventory without items wrapper', () => {
+      const agentWithArrayInventory = { ...mockMarine, inventory: ['vial'] };
+      const contextWithArray: PromptContext = {
+        ...mockContext,
+        agent: agentWithArrayInventory as any
+      };
+
+      const prompt = assemblePrompt(contextWithArray);
+
+      expect(prompt).toContain('Inventory: vial');
+      
+      // Should wrap array in { items: [...] } structure
+      const anyAgent = agentWithArrayInventory as any;
+      expect(anyAgent.inventory).toEqual({ items: ['vial'] });
+    });
+
     it('should handle hidden/empty items correctly', () => {
       const zoneWithHidden: Zone = {
         ...mockZone,

@@ -39,7 +39,8 @@ const DIRECTOR_ACTIONS = [
 ];
 
 export const assemblePrompt = (context: PromptContext): string => {
-  const { agent, memory, commanderMsg, zoneState } = context;
+  const { agent, memory, commanderMsg } = context;
+  let zoneState = context.zoneState;
   
   // Determine agent type for action list
   let actionsList: string;
@@ -71,7 +72,7 @@ export const assemblePrompt = (context: PromptContext): string => {
   ).join(', ');
   
   // Visible items in current zone
-  const visibleItems = zoneState.items 
+  const visibleItems = (zoneState && zoneState.items)
     ? Object.entries(zoneState.items)
         .filter(([_, item]) => item.state !== 'hidden' && item.state !== 'empty')
         .map(([name, item]) => `${name} (${item.state}${item.carriedBy ? `, carried by ${item.carriedBy}` : ''})`)
@@ -79,8 +80,26 @@ export const assemblePrompt = (context: PromptContext): string => {
     : 'none';
   
   // Agent name (fallback for alien/director)
-  const agentName = 'id' in agent ? (agent as Marine).id : 
+  const agentName = 'id' in agent ? (agent as Marine).id :
                    'position' in agent ? 'Alien' : 'Director';
+
+  // Ensure zoneState has defaults if incomplete
+  if (zoneState && !zoneState.items) {
+    zoneState.items = {};
+  }
+  if (!zoneState) {
+    console.warn(`[PROMPT] Missing zoneState for agent ${agentName}, defaulting`);
+    zoneState = { name: 'Unknown', connections: [], items: {} } as Zone;
+  }
+
+  // Ensure zoneState has defaults if incomplete
+  if (zoneState && !zoneState.items) {
+    zoneState.items = {};
+  }
+  if (!zoneState) {
+    console.warn(`[PROMPT] Missing zoneState for agent ${agentName}, defaulting`);
+    zoneState = { name: 'Unknown', connections: [], items: {} } as Zone;
+  }
   
   // Base stress/health info
   let statusInfo = '';
@@ -88,6 +107,27 @@ export const assemblePrompt = (context: PromptContext): string => {
     const marine = agent as Marine;
     statusInfo = `Health: ${marine.health}/10, Stress: ${marine.stress}/10`;
   }
+
+  // Defensive inventory handling
+  const anyAgent = agent as any;
+  let items = [];
+  if (anyAgent.inventory) {
+    if (Array.isArray(anyAgent.inventory)) {
+      items = anyAgent.inventory;
+    } else if (anyAgent.inventory.items && Array.isArray(anyAgent.inventory.items)) {
+      items = anyAgent.inventory.items;
+    } else {
+      console.warn(`[PROMPT] Invalid inventory for agent ${agentName || 'unknown'}:`, anyAgent.inventory);
+      items = [];
+      anyAgent.inventory = { items: [] };
+    }
+  } else {
+    console.warn(`[PROMPT] Missing inventory for agent ${agentName || 'unknown'}, initializing default`);
+    anyAgent.inventory = { items: [] };
+    items = [];
+  }
+
+  const inventoryInfo = items.length > 0 ? `Inventory: ${items.join(', ')}` : 'Inventory: empty';
   
   const prompt = `You are ${agentName}, ${personalityDescription}
 

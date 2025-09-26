@@ -67,11 +67,13 @@ export const MarineSchema = z.object({
 
 export const AlienSchema = z.object({
   position: z.string(),
-  hidden: z.boolean()
+  hidden: z.boolean(),
+  inventory: z.array(z.string()).optional()
 });
 
 export const DirectorSchema = z.object({
-  adjustments: z.array(z.string())
+  adjustments: z.array(z.string()),
+  inventory: z.array(z.string()).optional()
 });
 
 export type Agent = Marine | Alien | Director;
@@ -156,10 +158,25 @@ export const initialEntities: Entities = {
     ],
     alien: {
       position: 'Storage',
-      hidden: true
+      hidden: true,
+      inventory: []
     },
     director: {
-      adjustments: []
+      adjustments: [],
+      inventory: []
     }
   }
+};
+
+export const validateAgent = (agent: Agent): Agent => {
+  const anyAgent = agent as any;
+  if (!anyAgent.inventory) {
+    anyAgent.inventory = { items: [] };
+  } else if (Array.isArray(anyAgent.inventory)) {
+    // If inventory is string[], wrap it in { items }
+    anyAgent.inventory = { items: anyAgent.inventory };
+  } else if (!Array.isArray(anyAgent.inventory.items)) {
+    anyAgent.inventory.items = [];
+  }
+  return agent;
 };

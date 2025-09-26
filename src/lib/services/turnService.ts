@@ -1,7 +1,7 @@
 import { get } from 'svelte/store';
 import { eventStore, appendEvent, pruneToLast } from '../stores/eventStore';
 import { messageStore, addSystemMessage } from '../stores/messageStore';
-import { agentStore } from '../stores/agentStore';
+import { agentStore, ensureAgentDefaults } from '../stores/agentStore';
 import { worldStore } from '../stores/worldStore';
 import { callLLM } from './llmClient';
 import { assemblePrompt, buildDirectorPrompt, buildAlienPrompt, buildMarinePrompt } from './promptService';
@@ -63,12 +63,31 @@ const agentTypeToActorName = (agent: Agent): string => {
    tick: number,
    agentType: 'marine' | 'alien' | 'director'
  ): Promise<void> => {
+   // Validate agent state before processing
+   if (!agent) {
+     console.warn(`[TURNSERVICE] Agent is undefined for ${agentType} turn ${tick}`);
+     return;
+   }
+
+   // Ensure agent has location/inventory defaults
+   ensureAgentDefaults(agent);
+
+   // Validate and default zoneState
+   let safeZoneState = zoneState;
+   if (!zoneState) {
+     console.warn(`[TURNSERVICE] zoneState is undefined for ${agentType} turn ${tick}, defaulting`);
+     safeZoneState = { name: 'Unknown', connections: [], items: {} } as Zone;
+   } else if (!zoneState.items) {
+     console.warn(`[TURNSERVICE] zoneState.items is undefined for ${agentType} turn ${tick}, defaulting items`);
+     safeZoneState = { ...zoneState, items: {} };
+   }
+
    try {
      // Get recent memory (last 50 events)
      const recentEvents = pruneToLast(50);
      
      // Use agent service for generation and validation
-     const validatedAction = await generateAgentAction(agent, recentEvents, commanderMsg, zoneState);
+     const validatedAction = await generateAgentAction(agent, recentEvents, commanderMsg, safeZoneState);
     
     // Check compliance for marines (post-generation)
     if (agentType === 'marine' && validatedAction.isValid) {
@@ -146,12 +165,12 @@ export const advanceTurn = async (commanderMsg: string = ''): Promise<void> => {
   try {
     // Phase 1: Director acts first (environmental control)
     console.log('Director turn...');
-    const directorZone = worldState.zones['Command']; // Director "observes" from Command
+    const directorZone = worldState.zones['Command'] || { name: 'Command', connections: [], items: {} } as Zone; // Director "observes" from Command
     await processAgentTurn(agents.director, directorZone, commanderMsg, currentTick * 100 + subTick++, 'director');
     
     // Phase 2: Alien acts (stealth predator)
     console.log('Alien turn...');
-    const alienZone = worldState.zones[agents.alien.position];
+    const alienZone = worldState.zones[agents.alien.position] || { name: agents.alien.position || 'Unknown', connections: [], items: {} } as Zone;
     await processAgentTurn(agents.alien, alienZone, commanderMsg, currentTick * 100 + subTick++, 'alien');
     
     // Phase 3: Marines act (by speed/initiative order)
@@ -170,7 +189,7 @@ export const advanceTurn = async (commanderMsg: string = ''): Promise<void> => {
         continue;
       }
       
-      const marineZone = worldState.zones[marine.position];
+      const marineZone = worldState.zones[marine.position] || { name: marine.position || 'Unknown', connections: [], items: {} } as Zone;
       await processAgentTurn(marine, marineZone, commanderMsg, currentTick * 100 + subTick++, 'marine');
       
       // Small delay between marine actions for readability

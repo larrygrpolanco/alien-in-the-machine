@@ -79,6 +79,77 @@ describe('agentService', () => {
       expect(callLLM).toHaveBeenCalledTimes(1);
     });
 
+    it('should disable mocks in production environment (useMOCKS=false)', async () => {
+      // Mock production environment
+      const originalEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'production';
+      
+      // Mock LLM to return invalid action - should NOT be overridden in production
+      const { callLLM } = await import('../../src/lib/services/llmClient');
+      vi.mocked(callLLM).mockResolvedValueOnce({ action: 'move', reasoning: 'invalid for alien - no override expected' });
+      
+      const action = await generateAgentAction(mockAlienAgent, mockMemory, mockCommanderMsg, mockZoneState);
+      
+      // Should pass through invalid action to validation (no mock override)
+      expect(action.action).toBe('move');
+      expect(action.reasoning).not.toContain('Mock LLM adjusted');
+      
+      // Restore environment
+      process.env.NODE_ENV = originalEnv;
+    });
+
+    it('should generate only valid actions from weighted selection for alien', async () => {
+      // Test multiple runs to verify only valid ALIEN_ACTIONS are generated
+      const validAlienActions = ['sneak', 'stalk', 'ambush', 'hide', 'hunt', 'lurk'];
+      const results: string[] = [];
+      
+      for (let i = 0; i < 10; i++) {
+        vi.spyOn(Math, 'random').mockReturnValueOnce(i / 10.0);
+        const { callLLM } = await import('../../src/lib/services/llmClient');
+        vi.mocked(callLLM).mockResolvedValueOnce({ action: 'invalid' + i, reasoning: 'force override' });
+        
+        const action = await generateAgentAction(mockAlienAgent, mockMemory, mockCommanderMsg, mockZoneState);
+        results.push(action.action);
+      }
+      
+      // All results should be valid alien actions
+      results.forEach(action => {
+        expect(validAlienActions).toContain(action);
+      });
+      
+      // Should see weighted distribution (more sneak/hide than lurk/hunt)
+      const stealthCount = results.filter(a => a === 'sneak' || a === 'hide').length;
+      expect(stealthCount).toBeGreaterThanOrEqual(5); // At least 50% stealth actions
+    });
+
+    it('should handle message fallback for director when message is invalid', async () => {
+      // Mock DIRECTOR_ACTIONS to exclude 'message' (force fallback)
+      const originalDirectorActions = require('../../src/lib/services/actionValidator').DIRECTOR_ACTIONS;
+      vi.doMock('../../src/lib/services/actionValidator', () => ({
+        ...require('../../src/lib/services/actionValidator'),
+        DIRECTOR_ACTIONS: new Set(['nudge', 'escalate', 'reveal']) // No 'message'
+      }));
+      
+      // Mock LLM to return 'message'
+      const { callLLM } = await import('../../src/lib/services/llmClient');
+      vi.mocked(callLLM).mockResolvedValueOnce({ action: 'message', reasoning: 'director message' });
+      
+      // Mock random to select fallback
+      vi.spyOn(Math, 'random').mockReturnValue(0.3);
+      
+      const action = await generateAgentAction(mockDirectorAgent, mockMemory, mockCommanderMsg, mockZoneState);
+      
+      expect(action.action).toBe('nudge'); // Fallback from message
+      expect(action.reasoning).toContain('Mock LLM adjusted');
+      expect(action.reasoning).toContain('message fallback');
+      
+      // Restore original
+      vi.doMock('../../src/lib/services/actionValidator', () => ({
+        ...require('../../src/lib/services/actionValidator'),
+        DIRECTOR_ACTIONS: originalDirectorActions
+      }));
+    });
+
     it('should not apply weighted override for marine actions', async () => {
       // Mock LLM to return something
       const { callLLM } = await import('../../src/lib/services/llmClient');

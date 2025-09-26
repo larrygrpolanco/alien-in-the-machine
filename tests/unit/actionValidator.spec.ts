@@ -136,6 +136,42 @@ describe('actionValidator', () => {
       expect(result.reasoning).toContain('Fallback: Subtle narrative influence');
     });
 
+    it('should map invalid "message" action to valid fallback for director', () => {
+      const messageAction = {
+        action: 'message',
+        reasoning: 'Director trying to communicate'
+      };
+
+      const result: ValidatedAction = validateAction(messageAction, 'director', undefined, undefined, 'Director', 1);
+
+      expect(result.isValid).toBe(true);
+      expect(result.action).toBe('nudge'); // Mapped from message
+      expect(result.reasoning).toContain('Director');
+    });
+
+    it('should map invalid "message" action to "report" for marine', () => {
+      const messageAction = {
+        action: 'message',
+        reasoning: 'Marine trying to communicate'
+      };
+
+      const result: ValidatedAction = validateAction(messageAction, 'marine', 'aggressive', 2, 'Hudson', 1);
+
+      expect(result.isValid).toBe(true);
+      expect(result.action).toBe('report'); // Mapped from message for marine
+      expect(result.reasoning).toContain('Hudson');
+    });
+
+    it('should reduce retry limit to 2 for non-critical failures', () => {
+      const invalidAction = { action: 'invalid', reasoning: 'test' };
+      
+      const result: ValidatedAction = validateAction(invalidAction, 'marine', 'aggressive', 2, 'Hudson', 1, 2);
+
+      expect(result.retryCount).toBe(2); // Max retries reached
+      expect(result.fallbackUsed).toBe(true);
+      expect(result.reasoning).toContain('Hudson');
+    });
+
     it('should handle string JSON input', () => {
       const jsonString = JSON.stringify({
         action: 'search',
@@ -207,7 +243,7 @@ describe('actionValidator', () => {
       const secondInvalid = { action: 'invalid2', reasoning: 'second' };
       
       // Since validateAction handles retries internally, test with maxRetries=1
-      const result: ValidatedAction = validateAction(firstInvalid, 'marine', 'aggressive', 2, 1);
+      const result: ValidatedAction = validateAction(firstInvalid, 'marine', 'aggressive', 2, 'hudson', undefined, 1);
 
       expect(result.isValid).toBe(false);
       expect(result.retryCount).toBe(1);

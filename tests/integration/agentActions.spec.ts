@@ -70,6 +70,104 @@ describe('Agent Actions Integration', () => {
     (messageStore as any).get = vi.fn(() => []);
   });
 
+  describe('stability and error handling', () => {
+    it('should complete multiple turns without validation failures or TypeErrors', async () => {
+      // Mock all actions to succeed
+      mockPerformMarineAction.mockResolvedValue({
+        type: 'move',
+        agentId: 'hudson',
+        timestamp: Date.now(),
+        success: true
+      } as Event);
+
+      mockPerformAlienAction.mockResolvedValue({
+        type: 'sneak',
+        agentId: 'alien',
+        timestamp: Date.now(),
+        success: true
+      } as Event);
+
+      mockPerformDirectorAction.mockResolvedValue({
+        type: 'directorAction',
+        action: 'nudge',
+        timestamp: Date.now(),
+        success: true
+      } as Event);
+
+      // Mock console to catch errors
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      // Run 10 turns (small scale for integration test)
+      for (let turn = 1; turn <= 10; turn++) {
+        // Update turn number in mock world
+        (worldStore as any).get = vi.fn(() => ({ ...mockWorld, turn }));
+
+        await Promise.all([
+          performMarineAction(mockMarine, { type: 'move', target: 'shuttleBay' }),
+          performAlienAction(mockAlien, { type: 'sneak', target: 'storage' }),
+          performDirectorAction(mockDirector, { action: 'nudge', target: 'hudson' })
+        ]);
+      }
+
+      // Verify no errors occurred
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+      expect(consoleWarnSpy).not.toHaveBeenCalled();
+
+      // Verify events accumulated
+      const events = get(eventStore) as Event[];
+      expect(events).toHaveLength(30); // 3 actions × 10 turns
+
+      // Verify all events successful
+      expect(events.every(e => e.success)).toBe(true);
+
+      // Verify world state updated progressively
+      const finalWorld = get(worldStore) as World;
+      expect(finalWorld.turn).toBe(11); // After 10 turns
+
+      consoleErrorSpy.mockRestore();
+      consoleWarnSpy.mockRestore();
+    });
+
+    it('should handle agent inventory edge cases without TypeErrors', async () => {
+      // Test marine with undefined inventory
+      const marineNoInventory = { ...mockMarine, inventory: undefined } as any;
+      
+      mockPerformMarineAction.mockResolvedValue({
+        type: 'interact',
+        agentId: 'hudson',
+        itemId: 'vial',
+        timestamp: Date.now(),
+        success: true
+      } as Event);
+
+      await performMarineAction(marineNoInventory, { type: 'interact', target: 'vial' });
+
+      // Should not throw TypeError, inventory should be initialized
+      expect(marineNoInventory.inventory).toEqual([{ id: 'vial', name: 'Vial' }]);
+
+      // Test alien with invalid inventory structure
+      const alienInvalidInventory = { ...mockAlien, inventory: 'invalid' } as any;
+      
+      mockPerformAlienAction.mockResolvedValue({
+        type: 'hide',
+        agentId: 'alien',
+        timestamp: Date.now(),
+        success: true
+      } as Event);
+
+      await performAlienAction(alienInvalidInventory, { type: 'hide' });
+
+      // Should normalize inventory without error
+      expect(alienInvalidInventory.inventory).toEqual({ items: [] });
+
+      // Verify events processed
+      const events = get(eventStore) as Event[];
+      expect(events).toHaveLength(2);
+      expect(events.every(e => e.success)).toBe(true);
+    });
+  });
+
   it('marine moves to adjacent zone and updates world state immutably', async () => {
     mockPerformMarineAction.mockResolvedValue({
       type: 'move',
