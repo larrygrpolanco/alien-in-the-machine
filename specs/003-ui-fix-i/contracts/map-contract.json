@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MapView Contract",
+  "description": "Schema for Map component props and events in Svelte UI fix.",
+  "type": "object",
+  "properties": {
+    "position": {
+      "type": "object",
+      "properties": {
+        "x": { "type": "number", "minimum": 0, "maximum": 100 },
+        "y": { "type": "number", "minimum": 0, "maximum": 100 },
+        "centered": { "type": "boolean" }
+      },
+      "required": ["x", "y", "centered"],
+      "description": "Map position as viewport percentages"
+    },
+    "connections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "target": { "type": "string" },
+          "active": { "type": "boolean" },
+          "glow": { "type": "boolean" }
+        },
+        "required": ["target", "active", "glow"]
+      },
+      "description": "Active connections to other UI elements"
+    },
+    "size": {
+      "type": "object",
+      "properties": {
+        "width": { "type": "string", "pattern": "^[0-9]+(vw|vh|%|rem|px)$" },
+        "height": { "type": "string", "pattern": "^[0-9]+(vw|vh|%|rem|px)$" }
+      },
+      "required": ["width", "height"],
+      "description": "Responsive size using viewport units"
+    },
+    "interactive": {
+      "type": "boolean",
+      "description": "Enable touch/click interactions"
+    }
+  },
+  "required": ["position", "size", "interactive"],
+  "additionalProperties": false,
+  "events": {
+    "connectionUpdate": {
+      "description": "Emitted when connections change",
+      "parameters": {
+        "connections": "array"
+      }
+    },
+    "positionChange": {
+      "description": "Emitted on map repositioning",
+      "parameters": {
+        "position": "object"
+      }
+    },
+    "interaction": {
+      "description": "Emitted on user interaction with map",
+      "parameters": {
+        "type": "string",
+        "coordinates": { "x": "number", "y": "number" }
+      }
+    }
+  }
+}

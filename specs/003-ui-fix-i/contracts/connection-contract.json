@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Connection Indicators Contract",
+  "description": "Schema for visual connection props and events between UI elements (e.g., map to messages).",
+  "type": "object",
+  "properties": {
+    "source": {
+      "type": "string",
+      "description": "Source element ID (e.g., 'map', 'status')",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$"
+    },
+    "target": {
+      "type": "string",
+      "description": "Target element ID (e.g., 'messageStream', 'agentStatus')",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$"
+    },
+    "active": {
+      "type": "boolean",
+      "description": "Whether the connection is currently active"
+    },
+    "glow": {
+      "type": "boolean",
+      "description": "Apply glowing visual effect"
+    },
+    "style": {
+      "type": "object",
+      "properties": {
+        "lineColor": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "thickness": { "type": "number", "minimum": 1, "maximum": 10 },
+        "animation": { "type": "string", "enum": ["none", "pulse", "glow"] }
+      },
+      "required": ["lineColor", "thickness"],
+      "description": "Visual styling for the connection line"
+    },
+    "accessibility": {
+      "type": "object",
+      "properties": {
+        "label": { "type": "string", "description": "ARIA label for screen readers" },
+        "role": { "type": "string", "enum": ["link", "status", "separator"] }
+      },
+      "required": ["label"],
+      "description": "Accessibility attributes"
+    }
+  },
+  "required": ["source", "target", "active", "style", "accessibility"],
+  "additionalProperties": false,
+  "events": {
+    "connectionStateChange": {
+      "description": "Emitted when connection active/glow state changes",
+      "parameters": {
+        "source": "string",
+        "target": "string",
+        "active": "boolean",
+        "glow": "boolean"
+      }
+    },
+    "styleUpdate": {
+      "description": "Emitted when visual style changes",
+      "parameters": {
+        "style": "object"
+      }
+    }
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LayoutState Contract",
+  "description": "Schema for responsive layout props and events in Svelte components.",
+  "type": "object",
+  "properties": {
+    "breakpoint": {
+      "type": "string",
+      "enum": ["mobile", "tablet", "desktop"],
+      "description": "Current responsive breakpoint"
+    },
+    "orientation": {
+      "type": "string",
+      "enum": ["portrait", "landscape"],
+      "description": "Device orientation"
+    },
+    "isOverflowing": {
+      "type": "boolean",
+      "description": "Flag for layout overflow"
+    },
+    "theme": {
+      "type": "object",
+      "properties": {
+        "bg": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "accentBlue": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "accentPurple": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "glow": { "type": "string", "description": "CSS box-shadow value" }
+      },
+      "required": ["bg", "accentBlue", "accentPurple", "glow"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["breakpoint", "theme"],
+  "additionalProperties": false,
+  "events": {
+    "resize": {
+      "description": "Emitted on window resize",
+      "parameters": {
+        "breakpoint": "string",
+        "orientation": "string"
+      }
+    },
+    "overflowChange": {
+      "description": "Emitted when isOverflowing toggles",
+      "parameters": { "isOverflowing": "boolean" }
+    }
+  }
+}
