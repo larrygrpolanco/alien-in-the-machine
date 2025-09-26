@@ -1,0 +1,228 @@
+<script lang="ts">
+  import type { Message } from '../stores/messageStore';
+  
+  export let messages: Message[] = [];
+  
+  let container: HTMLDivElement;
+  let messageList: HTMLUListElement;
+  
+  // Auto-scroll to bottom when new messages arrive
+  $: if (messageList) {
+    messageList.scrollTop = messageList.scrollHeight;
+  }
+</script>
+
+<div class="message-stream-container" bind:this={container}>
+  <ul class="message-list" bind:this={messageList} role="log" aria-live="polite">
+    {#each messages as message, index (message.timestamp + '-' + index)}
+      <li class="message-item" role="log" aria-label="{message.sender} message">
+        <span class="timestamp">
+          [{new Date(message.timestamp).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          })}]
+        </span>
+        <span class="sender">{message.sender}:</span>
+        <span class="content">{message.content}</span>
+      </li>
+    {/each}
+    
+    {#if messages.length === 0}
+      <li class="message-item no-messages">
+        <span class="timestamp">[--:--:--]</span>
+        <span class="sender">SYSTEM:</span>
+        <span class="content">Awaiting mission start...</span>
+      </li>
+    {/if}
+  </ul>
+</div>
+
+<style>
+  .message-stream-container {
+    height: 100%;
+    background: #000;
+    border: 1px solid #00ff41;
+    border-radius: 3px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .message-list {
+    flex: 1;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    background: #000;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.3;
+    scroll-behavior: smooth;
+  }
+  
+  .message-item {
+    display: flex;
+    flex-direction: column;
+    padding: 4px 8px;
+    border-bottom: 1px solid #003300;
+    background: #001100;
+    margin: 0;
+    color: #00ff41;
+    word-wrap: break-word;
+    hyphens: auto;
+  }
+  
+  .message-item + .message-item {
+    border-top: 1px solid #003300;
+  }
+  
+  .message-item.no-messages {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    opacity: 0.6;
+    font-style: italic;
+  }
+  
+  .timestamp {
+    color: #00cc33;
+    font-size: 10px;
+    opacity: 0.8;
+    margin-right: 8px;
+    min-width: 60px;
+    display: inline-block;
+  }
+  
+  .sender {
+    color: #00ff41;
+    font-weight: bold;
+    margin-right: 8px;
+    text-transform: uppercase;
+    font-size: 11px;
+  }
+  
+  .content {
+    color: #00ff41;
+    font-size: 12px;
+    flex: 1;
+  }
+  
+  /* Sender-specific colors */
+  .sender.COMMANDER {
+    color: #ffffff;
+    text-shadow: 0 0 2px #00ff41;
+  }
+  
+  .sender.SYSTEM {
+    color: #ffaa00;
+    font-weight: bold;
+  }
+  
+  .sender.hudson {
+    color: #ff6666;
+  }
+  
+  .sender.vasquez {
+    color: #66ccff;
+  }
+  
+  .sender.ALIEN {
+    color: #ff0000;
+    text-shadow: 0 0 2px #ff0000;
+    animation: alienGlow 2s infinite alternate;
+  }
+  
+  /* Message type styling */
+  .message-item:has(.sender.COMMANDER) {
+    border-left: 3px solid #ffffff;
+    background: #001a00;
+  }
+  
+  .message-item:has(.sender.SYSTEM) {
+    background: #001100;
+    border-left: 2px solid #ffaa00;
+  }
+  
+  .message-item:has(.sender.ALIEN) {
+    background: #1a0000;
+    border-left: 3px solid #ff0000;
+  }
+  
+  /* New message highlight */
+  .message-item.new-message {
+    background: #001a00 !important;
+    border-left: 4px solid #00ff41;
+    animation: newMessageFlash 0.5s ease-out;
+  }
+  
+  @keyframes newMessageFlash {
+    0% {
+      background: #001a00;
+      border-left-color: #00ff41;
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.8;
+    }
+    100% {
+      background: #001100;
+      border-left-color: #00ff41;
+      opacity: 1;
+    }
+  }
+  
+  @keyframes alienGlow {
+    0% {
+      text-shadow: 0 0 2px #ff0000;
+    }
+    100% {
+      text-shadow: 0 0 5px #ff0000, 0 0 10px #ff0000;
+    }
+  }
+  
+  /* Scrollbar styling */
+  .message-list::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .message-list::-webkit-scrollbar-track {
+    background: #000;
+  }
+  
+  .message-list::-webkit-scrollbar-thumb {
+    background: #003300;
+    border: 1px solid #00ff41;
+  }
+  
+  .message-list::-webkit-scrollbar-thumb:hover {
+    background: #004400;
+  }
+  
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .message-item {
+      border-bottom-color: #00ff41;
+    }
+    
+    .timestamp, .sender, .content {
+      color: #00ff41 !important;
+    }
+  }
+  
+  /* Print styles */
+  @media print {
+    .message-list {
+      font-size: 10px;
+      max-height: none;
+      break-inside: avoid;
+    }
+    
+    .message-item {
+      break-inside: avoid;
+      margin-bottom: 2px;
+      page-break-inside: avoid;
+    }
+  }
+</style>
