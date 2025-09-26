@@ -12,22 +12,22 @@
 - After all tasks: Run `npm run test:unit`, `npx playwright test`, check coverage ≥80%.
 
 ## Initial Test Tasks [P] (Parallel - TDD Foundation; Write Failing Tests First)
- 
+  
 **T002: Create contract validation test for map-contract.json [P]**
 Description: Write Vitest test suite validating MapView props against map-contract.json schema (position x/y ≥20% if not centered, size viewport units, connections array). Snapshot test for events. Expect failure.
 Files: tests/unit/mapContract.spec.ts (create new).
 Depends on: None.
 Parallel: Run with T003 (independent contracts).
 Command: `kilocode run-task T002`
-Status: [ ]
- 
+Status: [x]
+
 **T003: Create contract validation test for connection-contract.json [P]**
 Description: Write Vitest test suite validating connection props against connection-contract.json schema (source/target patterns, style required, accessibility label). Test glow/active states. Expect failure.
 Files: tests/unit/connectionContract.spec.ts (create new).
 Depends on: None.
 Parallel: Run with T002.
 Command: `kilocode run-task T003`
-Status: [ ]
+Status: [x]
 
 ## Setup Tasks (Sequential - After Initial Contract Tests)
 
@@ -36,14 +36,14 @@ Description: Update ESLint config to include stylelint for CSS validation (e.g.,
 Files: eslint.config.js (root), .prettierrc (root).
 Depends on: T003.
 Command: `kilocode run-task T004`
-Status: [ ]
- 
+Status: [x]
+
 **T005: Update package.json and install dependencies**
 Description: Ensure custom CSS setup for responsive utilities per spec NFR-002. Add any missing dev deps for testing (e.g., @playwright/test if needed). Run `npm install`. No tailwind.config.js needed.
 Files: package.json (root).
 Depends on: T004.
 Command: `kilocode run-task T005`
-Status: [ ]
+Status: [x]
 
 **T001: Create contract validation test for layout-contract.json [P]**
 Description: Write Vitest test suite validating LayoutState props against layout-contract.json schema (breakpoint enum, theme colors). Use jsdom to mock resize events. Expect initial failure due to no implementation.
@@ -51,7 +51,7 @@ Files: tests/unit/layoutContract.spec.ts (create new).
 Depends on: None.
 Parallel: Can run with T002, T003 (independent contracts).
 Command: `kilocode run-task T001`
-Status: [ ]
+Status: [x]
 
 ## E2E Test Tasks [P] (Parallel - TDD Foundation; Write Failing Tests First)
 
@@ -61,7 +61,7 @@ Files: e2e/ui-mobile-layout.test.ts (create new).
 Depends on: T005.
 Parallel: Can run with T007-T010 (scenarios independent pre-impl).
 Command: `kilocode run-task T006`
-Status: [ ]
+Status: [x]
 
 **T007: Implement Quickstart Scenario 2 - Desktop Adaptation E2E Test [P]**
 Description: Write Playwright test for desktop (1920px) resizing to tablet (800px): Assert grid shift to 2-col, map centered, connections visible. Expect failure (misalignment). Implements FR-001.
@@ -69,7 +69,7 @@ Files: e2e/ui-desktop-adaptation.test.ts (create new).
 Depends on: T005.
 Parallel: Run with T006, T008-T010.
 Command: `kilocode run-task T007`
-Status: [ ]
+Status: [x]
 
 **T008: Implement Quickstart Scenario 3 - Map Positioning & Connections E2E Test [P]**
 Description: Write Playwright test: Assert map size 100%/50vh with ≤5% offset from center (e.g., auto margin or translate). glowing connection line (opacity=1, animation), ARIA label present. Simulate interaction. Expect failure (top-left). Implements FR-002, FR-003.
@@ -77,7 +77,7 @@ Files: e2e/ui-map-connections.test.ts (create new).
 Depends on: T005.
 Parallel: Run with T006-T007, T009-T010.
 Command: `kilocode run-task T008`
-Status: [ ]
+Status: [x]
 
 **T009: Implement Quickstart Scenario 4 - Theme & Accessibility E2E Test [P]**
 Description: Write Playwright test for dark mode: Validate ≥4.5:1 contrast, ≥16px fonts, ARIA labels on map/connections. Use axe-core for accessibility scan. Expect failure (low contrast). Implements NFR-002.
@@ -85,7 +85,7 @@ Files: e2e/ui-theme-accessibility.test.ts (create new).
 Depends on: T005.
 Parallel: Run with T006-T008, T010.
 Command: `kilocode run-task T009`
-Status: [ ]
+Status: [x]
 
 **T010: Implement Quickstart Scenario 5 - Performance E2E Test [P]**
 Description: Write Playwright test with 4G emulation: Assert First Contentful Paint ≤2s, no layout shifts ≤100px. Include unit mocks for 2s render, ≤100px shifts. Use performance API. Expect failure (slow render). Implements NFR-001, NFR-003.
@@ -93,7 +93,7 @@ Files: e2e/ui-performance.test.ts (create new).
 Depends on: T005.
 Parallel: Run with T006-T009.
 Command: `kilocode run-task T010`
-Status: [ ]
+Status: [x]
 
 **T011: Implement Low-Bandwidth E2E Test [P]**
 Description: Write Playwright test with network throttling (<1Mbps emulation): Assert initial render <3s, map/messages load first (no blocking), lazy assets deferred. Use performance API for timing. Expect failure initially. Implements FR-005, NFR-004.
@@ -101,7 +101,7 @@ Files: e2e/ui-low-bandwidth.test.ts (create new).
 Depends on: T005.
 Parallel: Run with T006-T012.
 Command: `kilocode run-task T011`
-Status: [ ]
+Status: [x]
 
 *Parallel Guidance: Run in parallel: Contract tests T002 [P], T003 [P], T001 [P] first. Then setup T004-T005. Then E2E T006-T010 [P]. All should fail initially.*
 
@@ -112,14 +112,14 @@ Description: Create writable store for LayoutState entity per data-model.md and 
 Files: src/lib/stores/layoutStore.ts (create new), src/app.html (add resize listener if needed).
 Depends on: T001 (test).
 Command: `kilocode run-task T013`
-Status: [ ]
+Status: [x]
 
 **T014: Update Map.svelte component for responsive positioning**
 Description: Refactor Map.svelte to use MapView entity per data-model.md and map-contract.json. Set position {x:'50%', y:'50%', centered:true} and CSS: .map-centered { position: relative; left: 50%; transform: translateX(-50%); /* or margin: auto for ≤5% offset per FR-002 */ }, size {width:'100%', height:'50vh'}, interactive=true. Implement custom CSS classes per spec NFR-002 (e.g., .map-centered { position: relative; margin: auto; min-width: 20vw; min-height: 20vh; } for <640px, #00f5ff accents). Integrate layoutStore for responsive. Pass T002, T008. Implements FR-002.
 Files: src/lib/components/Map.svelte.
 Depends on: T002, T013 (store).
 Command: `kilocode run-task T014`
-Status: [ ]
+Status: [-]
 
 **T015: Add connection indicators to Map.svelte and related components**
 Description: Implement connections array in Map.svelte per map-contract.json and connection-contract.json. Use custom CSS pseudo-elements (::after) for glowing lines (box-shadow 0 0 10px #00f5ff, pulse animation). Link to messageStream/agentStatus. Add ARIA labels. Pass T003, T008. Implements FR-003.

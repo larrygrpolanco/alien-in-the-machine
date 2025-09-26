@@ -168,6 +168,36 @@ export const initialEntities: Entities = {
   }
 };
 
+export interface LayoutState {
+  breakpoint: 'mobile' | 'tablet' | 'desktop';
+  orientation: 'portrait' | 'landscape';
+  isOverflowing: boolean;
+  theme: {
+    bg: string; // e.g., '#0a0a0a'
+    accentBlue: string; // e.g., '#00f5ff'
+    accentPurple: string; // e.g., '#8b00ff'
+    glow: string; // e.g., '0 0 20px #00f5ff'
+  };
+}
+
+export interface MapView {
+  position: {
+    x: number; // 0-100 (% viewport)
+    y: number; // 0-100 (% viewport)
+    centered: boolean;
+  };
+  connections: Array<{
+    target: string; // e.g., 'messageStream', 'agentStatus'
+    active: boolean;
+    glow: boolean;
+  }>;
+  size: {
+    width: string; // e.g., '100%', '100vw'
+    height: string; // e.g., '50vh'
+  };
+  interactive: boolean;
+}
+
 export const validateAgent = (agent: Agent): Agent => {
   const anyAgent = agent as any;
   if (!anyAgent.inventory) {

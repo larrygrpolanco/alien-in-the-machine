@@ -1,21 +1,62 @@
 <script lang="ts">
   import type { Message } from '../stores/messageStore';
+  import type { Connection } from '$lib/models/entities';
+  import { layoutStore } from '../stores/layoutStore';
   
   export let messages: Message[] = [];
+  export let connections: Connection[] = []; // From map connections
   
   let container: HTMLDivElement;
   let messageList: HTMLUListElement;
+  let layoutState = $layoutStore;
   
   // Auto-scroll to bottom when new messages arrive
   $: if (messageList) {
     messageList.scrollTop = messageList.scrollHeight;
   }
+  
+  // Update connection status based on layout and messages
+  $: activeConnections = connections.filter(c => c.active && c.target === 'messageStream');
+  $: hasActiveMapConnection = activeConnections.length > 0;
+  $: glowEffect = activeConnections.some(c => c.glow);
+  
+  // Connection style from contract
+  $: connectionStyle = activeConnections[0]?.style || {
+    lineColor: '#00f5ff',
+    thickness: 2,
+    animation: 'pulse'
+  };
 </script>
 
-<div class="message-stream-container" bind:this={container}>
+<div
+  class="message-stream-container {layoutState.breakpoint}"
+  class:connected={hasActiveMapConnection}
+  class:glowing={glowEffect}
+  bind:this={container}
+  role="log"
+  aria-live="polite"
+  aria-label="Message stream{hasActiveMapConnection ? ' connected to map' : ''}. {messages.length} messages."
+  data-connection-target="messageStream"
+  style="--connection-color: {connectionStyle.lineColor}; --connection-thickness: {connectionStyle.thickness}px; --connection-animation: {connectionStyle.animation};"
+>
+  <!-- Connection indicator line to map -->
+  {#if hasActiveMapConnection}
+    <div
+      class="connection-indicator to-map"
+      role="status"
+      aria-label={`Active connection to map, {glowEffect ? 'glowing' : 'static'}`}
+      data-connection="map-message"
+    >
+      <div class="connection-line" aria-hidden="true"></div>
+      <div class="connection-status sr-only" aria-live="polite">
+        Map connection {glowEffect ? 'active and glowing' : 'active'}
+      </div>
+    </div>
+  {/if}
+  
   <ul class="message-list" bind:this={messageList} role="log" aria-live="polite">
     {#each messages as message, index (message.timestamp + '-' + index)}
-      <li class="message-item" role="log" aria-label="{message.sender} message">
+      <li class="message-item" role="log" aria-label="{message.sender} message at {new Date(message.timestamp).toLocaleTimeString()}">
         <span class="timestamp">
           [{new Date(message.timestamp).toLocaleTimeString([], {
             hour: '2-digit',
@@ -29,13 +70,24 @@
     {/each}
     
     {#if messages.length === 0}
-      <li class="message-item no-messages">
+      <li class="message-item no-messages" role="status" aria-label="No messages - awaiting mission start">
         <span class="timestamp">[--:--:--]</span>
         <span class="sender">SYSTEM:</span>
         <span class="content">Awaiting mission start...</span>
       </li>
     {/if}
   </ul>
+  
+  <!-- Connection status indicator -->
+  {#if hasActiveMapConnection}
+    <div class="connection-status-bar" role="status" aria-live="polite">
+      <span class="connection-icon" aria-hidden="true">↔</span>
+      <span class="connection-text">
+        Map {glowEffect ? 'streaming' : 'connected'}
+        <span class="connection-glow" style="--glow: {glowEffect ? 'visible' : 'hidden'};"></span>
+      </span>
+    </div>
+  {/if}
 </div>
 
 <style>
