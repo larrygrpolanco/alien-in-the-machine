@@ -1,0 +1,49 @@
+{
+  "marine": [
+    {
+      "action": "move",
+      "target": "corridor",
+      "reasoning": "Moving to adjacent zone to explore based on commander orders"
+    },
+    {
+      "action": "search",
+      "target": "storage",
+      "reasoning": "Searching storage area for potential threats or items"
+    },
+    {
+      "action": "report",
+      "reasoning": "Reporting current status: all clear in current position"
+    }
+  ],
+  "alien": [
+    {
+      "action": "sneak",
+      "target": "vent",
+      "reasoning": "Sneaking through vents to approach marines undetected"
+    },
+    {
+      "action": "hide",
+      "reasoning": "Hiding in shadows to avoid detection"
+    },
+    {
+      "action": "lurk",
+      "target": "shuttleBay",
+      "reasoning": "Lurking near shuttle bay waiting for opportunity to strike"
+    }
+  ],
+  "director": [
+    {
+      "action": "message",
+      "reasoning": "Sending narrative message to build tension"
+    },
+    {
+      "action": "nudge",
+      "target": "alien",
+      "reasoning": "Nudging alien to escalate encounter"
+    },
+    {
+      "action": "report",
+      "reasoning": "Director status: monitoring marine positions"
+    }
+  ]
+}

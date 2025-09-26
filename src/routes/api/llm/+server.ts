@@ -1,17 +1,38 @@
 import { json } from '@sveltejs/kit';
 import OpenAI from 'openai';
 import type { RequestHandler } from './$types';
+import fs from 'fs';
+import path from 'path';
 
 const apiKey = process.env.OPENROUTER_API_KEY;
 const defaultModel = process.env.DEFAULT_LLM_MODEL || 'deepseek/deepseek-chat-v3.1:free';
 
+// Mock mode flag (default to true for UI development)
+const isMockMode = process.env.MOCK_LLM !== 'false';
+
 let openai: OpenAI | null = null;
-if (apiKey) {
+if (apiKey && !isMockMode) {
   openai = new OpenAI({
     apiKey: apiKey,
     baseURL: 'https://openrouter.ai/api/v1',
   });
 }
+
+// Load mock data
+const MOCKS_PATH = path.resolve('src/lib/mocks/llm-mocks.json');
+const loadMockData = (): Record<string, any> => {
+  try {
+    if (fs.existsSync(MOCKS_PATH)) {
+      const data = fs.readFileSync(MOCKS_PATH, 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.warn('Failed to load mock data:', error);
+  }
+  return {};
+};
+
+const mockData = loadMockData();
 
 // Response schema for JSON mode
 const responseSchema = {
@@ -46,19 +67,40 @@ interface LLMResponse {
 }
 
 const callLLM = async (prompt: string, model: string = defaultModel): Promise<LLMResponse> => {
-  // Mock mode for tests (no API key)
-  if (!apiKey) {
-    console.log('Using mock LLM mode (no API key)');
-    // Simple scripted response based on prompt keywords
-    if (prompt.includes('search') || prompt.includes('Storage')) {
-      return { action: 'search', target: 'storage', reasoning: 'Mock: Searching per orders' };
-    } else if (prompt.includes('move')) {
-      return { action: 'move', target: 'shuttleBay', reasoning: 'Mock: Moving to adjacent zone' };
-    } else if (prompt.includes('report') || prompt.includes('status')) {
-      return { action: 'report', reasoning: 'Mock: Status report - all clear' };
-    } else {
-      return { action: 'cover', reasoning: 'Mock: Taking defensive position' };
+  // Mock mode: Return static responses from mocks file
+  if (isMockMode) {
+    console.log('[MOCK LLM SERVER] Using mock response for UI development');
+    
+    // Determine agent type from prompt keywords
+    const lowerPrompt = prompt.toLowerCase();
+    let agentType: 'marine' | 'alien' | 'director' = 'marine';
+    
+    if (lowerPrompt.includes('alien') || lowerPrompt.includes('xenomorph')) {
+      agentType = 'alien';
+    } else if (lowerPrompt.includes('director') || lowerPrompt.includes('narrative')) {
+      agentType = 'director';
     }
+    
+    const responses = mockData[agentType] || mockData.marine || [];
+    if (responses.length > 0) {
+      // Select random mock response
+      const mockIndex = Math.floor(Math.random() * responses.length);
+      const mockResponse = responses[mockIndex];
+      
+      console.log(`[MOCK LLM SERVER] Selected ${agentType} response: ${mockResponse.action}`);
+      return mockResponse;
+    }
+    
+    // Fallback mock response
+    return {
+      action: 'report',
+      reasoning: 'Mock server response: System operational for UI testing'
+    };
+  }
+
+  // Real API mode (guarded behind MOCK_LLM=false)
+  if (!apiKey) {
+    throw new Error('OpenRouter API key required for real LLM mode (MOCK_LLM=false)');
   }
 
   if (!openai) {

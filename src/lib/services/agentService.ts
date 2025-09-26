@@ -46,6 +46,10 @@ import { assemblePrompt } from './promptService';
 import { validateAction } from './actionValidator';
 import { callLLM } from './llmClient';
 
+// Mock LLM integration for UI testing
+const isMockMode = process.env.MOCK_LLM === 'true';
+const MOCK_SEQUENCE_INDEX = { marine: 0, alien: 0, director: 0 }; // For predictable testing sequences
+
 export const generateAgentAction = async (
 	agent: Agent,
 	memory: Event[],
@@ -56,10 +60,10 @@ export const generateAgentAction = async (
 	const promptContext = { agent, memory, commanderMsg, zoneState };
 	const prompt = assemblePrompt(promptContext);
 
-	// Call LLM via OpenRouter (uses env key or mock automatically)
+	// Call LLM (automatically uses mock mode if MOCK_LLM=true)
 	let llmResponse: LLMResponse = await callLLM(prompt);
 
-	// Determine agent type for validation
+	// Determine agent type for validation and mock enhancement
 	let agentType: 'marine' | 'alien' | 'director';
 	let personality: string | undefined;
 	let stress: number | undefined;
@@ -84,78 +88,45 @@ export const generateAgentAction = async (
 		throw new Error('Unknown agent type');
 	}
 
-	// Mock adjustment: Ensure valid action for agent type with weighted randomization
-	const useMOCKS = process.env.NODE_ENV !== 'production'; // Disable mocks in production; can be overridden via env var
-	if (agentType !== 'marine' && useMOCKS) {
-	  let allowedActions: Set<string>;
-	  let weightedActions: string[] = [];
-	  if (agentType === 'alien') {
-	    allowedActions = ALIEN_ACTIONS;
-	    // 60% core stealth: sneak/hide, 40% aggressive: lurk/hunt
-	    const weightedCounts = { sneak: 3, hide: 3, lurk: 2, hunt: 2 };
-	    const candidates = ['sneak', 'hide', 'lurk', 'hunt'];
-	    weightedActions = candidates
-	      .flatMap((action) => Array((weightedCounts[action as keyof typeof weightedCounts] || 1)).fill(action))
-	      .filter((action) => allowedActions.has(action));
-	    if (weightedActions.length === 0) weightedActions = Array.from(allowedActions);
-	  } else if (agentType === 'director') {
-	    allowedActions = DIRECTOR_ACTIONS;
-	    // 70% narrative: message/report, 30% escalation: nudge (fallback map 'message' to 'nudge' if invalid)
-	    const weightedCounts = { message: 4, report: 3, nudge: 1 };
-	    const candidates = ['message', 'report', 'nudge'];
-	    weightedActions = candidates
-	      .flatMap((action) => {
-	        const validAction = allowedActions.has(action)
-	          ? action
-	          : action === 'message'
-	            ? 'nudge'
-	            : 'report';
-	        return Array((weightedCounts[action as keyof typeof weightedCounts] || 1)).fill(validAction);
-	      })
-	      .filter((action) => allowedActions.has(action));
-	    if (weightedActions.length === 0) weightedActions = Array.from(allowedActions);
-	  } else {
-	    throw new Error(`Unknown agent type: ${agentType}`);
-	  }
-
-	  // Parse potential mock response to check for invalid actions
-	  let responseAction: string;
-		if (typeof llmResponse === 'string') {
-			responseAction = (llmResponse as string).toLowerCase().trim();
-		} else if (
-			llmResponse &&
-			typeof llmResponse === 'object' &&
-			'action' in llmResponse &&
-			typeof (llmResponse as any).action === 'string'
-		) {
-			responseAction = ((llmResponse as any).action as string).toLowerCase().trim();
-		} else {
-			responseAction = 'unknown';
-		}
-
-		// If response contains 'search', 'message' (if invalid), or other invalid action, override with weighted valid action
-		const normalizedAction = responseAction.replace(/[^a-z]/g, ''); // Clean for comparison
-		const isMessageInvalid = normalizedAction.includes('message') && !allowedActions.has('message');
-		if (
-			normalizedAction.includes('search') ||
-			isMessageInvalid ||
-			!allowedActions.has(normalizedAction)
-		) {
-			const randomIndex = Math.floor(Math.random() * weightedActions.length);
-			const weightedAction = weightedActions[randomIndex];
-			const fallbackReason = isMessageInvalid ? ' (mapped message to valid fallback)' : '';
-
-			// Create adjusted response (avoid mutating original if needed)
-			llmResponse = {
-				action: weightedAction,
-				target: undefined,
-				reasoning: `Mock LLM adjusted: Selected weighted ${weightedAction} for ${agentType} (original: ${responseAction})${fallbackReason}`
-			} as LLMResponse;
-
-			console.log(
-				`[MOCK OVERRIDE] ${agentName}: Adjusted invalid action '${responseAction}' to '${weightedAction}'${isMessageInvalid ? ' (message fallback)' : ''}`
-			);
-		}
+	// Enhanced mock adjustment for UI testing: Use MOCK_LLM flag and predictable sequences
+	if (isMockMode && agentType !== 'marine') {
+		// For UI testing, use predictable sequences instead of random weighted actions
+		const sequenceActions = {
+			alien: ['sneak', 'hide', 'lurk', 'hunt'], // Cycle through stealth to aggressive
+			director: ['message', 'report', 'nudge', 'escalate'] // Narrative to tension building
+		};
+		
+		const actionsForType = sequenceActions[agentType as keyof typeof sequenceActions] || ['report'];
+		const currentIndex = MOCK_SEQUENCE_INDEX[agentType];
+		const selectedAction = actionsForType[currentIndex % actionsForType.length];
+		
+		// Update sequence index for next call (predictable testing)
+		MOCK_SEQUENCE_INDEX[agentType] = (currentIndex + 1) % actionsForType.length;
+		
+		// Override LLM response with predictable mock for UI component testing
+		llmResponse = {
+			action: selectedAction,
+			target: agentType === 'alien' ? 'corridor' : undefined,
+			reasoning: `UI Test Sequence: ${agentType} performing ${selectedAction} (sequence position ${currentIndex + 1})`
+		} as LLMResponse;
+		
+		console.log(`[UI MOCK SEQUENCE] ${agentName}: ${selectedAction} (test sequence ${currentIndex + 1}/${actionsForType.length})`);
+		
+		// Skip validation override logic since we're providing valid actions
+	} else if (isMockMode && agentType === 'marine') {
+		// For marines in mock mode, use simple rotation for UI testing
+		const marineSequence = ['move', 'search', 'report', 'cover'];
+		const marineIndex = MOCK_SEQUENCE_INDEX.marine;
+		const marineAction = marineSequence[marineIndex % marineSequence.length];
+		MOCK_SEQUENCE_INDEX.marine = (marineIndex + 1) % marineSequence.length;
+		
+		llmResponse = {
+			action: marineAction,
+			target: marineAction === 'move' ? 'storage' : undefined,
+			reasoning: `UI Test: Marine ${marineAction} (sequence ${marineIndex + 1}/4)`
+		} as LLMResponse;
+		
+		console.log(`[UI MOCK MARINE] ${agentName}: ${marineAction} (test sequence ${marineIndex + 1}/4)`);
 	}
 
 	// Validate and parse the response

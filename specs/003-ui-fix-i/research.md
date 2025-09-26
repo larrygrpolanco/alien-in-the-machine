@@ -5,9 +5,9 @@
 ### 1. Responsive Design Best Practices for SvelteKit
 **Unknown**: Optimal approach for mobile-first responsive UI in Svelte.
 
-**Decision**: Use Tailwind CSS (already in project) with custom media queries for breakpoints: Mobile (<640px), Tablet (640-1024px), Desktop (>1024px). Implement CSS Grid/Flexbox for layout in +layout.svelte.
+**Decision**: Use custom CSS utilities with media queries for breakpoints: Mobile (<640px), Tablet (640-1024px), Desktop (>1024px). Implement CSS Grid/Flexbox for layout in +layout.svelte.
 
-**Rationale**: Tailwind provides utility-first responsive classes (e.g., `grid-cols-1 md:grid-cols-2`), reducing custom CSS. Svelte's scoped styles integrate seamlessly. Ensures no horizontal scroll, touch-friendly spacing (min 44px targets).
+**Rationale**: Custom CSS utilities provide responsive classes (e.g., .grid-cols-1, .md\:grid-cols-2), reducing boilerplate while maintaining control. Svelte's scoped styles integrate seamlessly. Ensures no horizontal scroll, touch-friendly spacing (min 44px targets).
 
 **Alternatives Considered**:
 - Pure CSS: More boilerplate, harder to maintain.
@@ -39,7 +39,7 @@
 ### 4. Theme Integration (Dark Sci-Fi)
 **Unknown**: Ensuring cosmic blues/purples with glowing effects across UI.
 
-**Decision**: Define global CSS variables in +layout.svelte: `--primary-bg: #0a0a0a; --accent-blue: #00f5ff; --accent-purple: #8b00ff; --glow: 0 0 20px var(--accent-blue);`. Apply to components via Tailwind or inline styles.
+**Decision**: Define global CSS variables in +layout.svelte: `--primary-bg: #0a0a0a; --accent-blue: #00f5ff; --accent-purple: #8b00ff; --glow: 0 0 20px var(--accent-blue);`. Apply to components via custom CSS classes or inline styles.
 
 **Rationale**: Variables allow theme consistency. Glowing effects via `filter: drop-shadow` or box-shadow enhance alien/machine aesthetic without impacting performance.
 
@@ -59,7 +59,7 @@
 - Manual: Insufficient for regression; automate for TDD.
 
 ## Consolidated Decisions
-- **Layout Framework**: Tailwind CSS + CSS Grid/Flexbox.
+- **Layout Framework**: Custom CSS utilities + CSS Grid/Flexbox.
 - **Map Fix**: Responsive CSS positioning with viewport units.
 - **Connections**: CSS pseudo-elements with glowing shadows.
 - **Theme**: CSS variables for dark sci-fi palette.

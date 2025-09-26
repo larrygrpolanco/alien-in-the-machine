@@ -59,5 +59,9 @@ These scenarios validate the UI fix requirements. Run with Playwright for E2E or
 
 All scenarios must fail initially (no implementation) to enforce TDD.
 
+## Development Notes
+- **Custom CSS**: All styling uses custom CSS utilities and media queries. No external frameworks (Tailwind) are used. Global CSS variables defined in +layout.svelte for theme consistency.
+- **Mock LLM Mode**: For UI development and testing without external APIs, set `MOCK_LLM=true` in .env. This enables static mock responses from src/lib/mocks/llm-mocks.json, allowing component testing (Map.svelte, AgentStatus.svelte) with predefined event sequences.
+
 ---
 *Quickstart completed: 2025-09-26*
