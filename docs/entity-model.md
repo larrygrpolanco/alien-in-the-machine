@@ -66,4 +66,5 @@ The world data for Zoo 1 is in [zoo-1/src/worlds/lab-world.ts](../zoo-1/src/worl
 
 - Does the supporter need a `capacity` field in practice? It was defined but no capacity enforcement is implemented or tested.
 - When Zoo 5 introduces two agents, hidden agent visibility must be derived from scope computation, not from a flag on the agent. Currently `isHidden` exists as a flag — is it actually needed, or is "agent is in scope or not" sufficient?
+  - On the isHidden flag question you raised in entity-model.md — your own open question is pointing you toward the right answer. isHidden is redundant with scope computation: if an agent is inside a closed opaque container, they're not in scope for other agents, period. The flag is a shortcut that works fine with one agent but will create a second source of truth in Zoo 5. You don't need to rip it out now, but mentally note that scope computation should be the authority on visibility, and isHidden is just a rendering convenience.
 - Should `meta.log` store structured `ActionLogEntry` objects (turn, agentId, action, result) or continue as plain strings? This matters for Zoo 4 memory construction.

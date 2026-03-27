@@ -48,4 +48,5 @@ This handles one level of nesting. Items inside a container inside a supporter (
 
 - Scope currently handles one level of container nesting. If a container holds another container, the inner container's contents are not computed. Is multi-level nesting needed before Zoo 3?
 - When agent is hidden in a container: should they see into the room if the container is open? Currently they don't — `computeScope` only looks at `containment[agent.locationId]`. This is probably correct for the scenario (you're hiding, you're not peeking out), but it's untested explicitly.
+  - This will have to be fixed if the container is open then the agent can see the room and others can see it.
 - Zoo 5 adds a second agent. Their scope must be computed independently. The function signature already supports this, but it has not been tested with two simultaneous agents and one hidden.
