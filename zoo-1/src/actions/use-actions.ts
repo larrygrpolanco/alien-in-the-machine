@@ -18,7 +18,7 @@ export function useActions(state: WorldState, setState: (s: WorldState) => void,
   return {
     message,
 
-    move(direction: string, destinationId: string) {
+    move(_direction: string, destinationId: string) {
       const result = moveTo(state, agentId, destinationId)
       setMessage(result.message)
       if (result.success) setState(result.state)

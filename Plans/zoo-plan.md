@@ -242,7 +242,7 @@ To your left is a tall metal closet (closed).
 The door to the north leads to the Hallway.
 
 Available actions:
-1. Search(desk_1) — Search the old wooden desk for items
+1. search(desk_1) — Search the old wooden desk for items
 2. take(keycard_1) — Pick up the keycard
 3. take(mug_1) — Pick up the coffee mug
 4. open(closet_1) — Open the metal closet

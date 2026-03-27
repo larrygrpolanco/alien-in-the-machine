@@ -3,6 +3,7 @@ import { world } from './worlds/lab-world'
 import { computeScope } from './world/scope'
 import { getEntity } from './world/entities'
 import { useActions } from './actions/use-actions'
+import { getAvailableActions } from './actions/available-actions'
 import type { WorldState, Entity, Container, Supporter, Thing } from './types/entities'
 
 function App() {
@@ -65,6 +66,9 @@ function App() {
   const roomContents = state.containment[room.id] || []
   const scope = computeScope(state, agent.id)
   const inScope = (id: string) => scope.includes(id)
+
+  // Auto-generated action list derived from scope + entity features
+  const availableActions = getAvailableActions(state, agent.id)
 
   // Sort room contents into categories for display
   const directThings: Entity[] = []
@@ -201,6 +205,26 @@ function App() {
       ) : (
         <p>Empty.</p>
       )}
+
+      {/* Auto-generated action list */}
+      <h2>Available Actions:</h2>
+      <ul>
+        {availableActions.map((a, i) => (
+          <li key={i}>
+            <button onClick={() => {
+              if (a.name === 'move') actions.move('', a.targetId)
+              else if (a.name === 'take') actions.take(a.targetId)
+              else if (a.name === 'drop') actions.drop(a.targetId)
+              else if (a.name === 'open') actions.open(a.targetId)
+              else if (a.name === 'close') actions.close(a.targetId)
+              else if (a.name === 'hideIn') actions.hideIn(a.targetId)
+              else if (a.name === 'emergeFrom') actions.emergeFrom()
+            }}>
+              {a.label}
+            </button>
+          </li>
+        ))}
+      </ul>
 
       {/* Debug: scope */}
       <h2>Scope (what you can see):</h2>

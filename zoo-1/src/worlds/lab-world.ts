@@ -16,14 +16,16 @@ export const world: WorldState = {
         id: 'lab',
         kind: 'room',
         name: 'Laboratory',
-        description: 'A cluttered lab with flickering fluorescent lights. A heavy desk sits against the wall. A metal closet stands in the corner.',
+        description:
+          'A cluttered lab with flickering fluorescent lights. A heavy desk sits against the wall. A metal closet stands in the corner.',
         exits: { north: 'hallway' },
       },
       hallway: {
         id: 'hallway',
         kind: 'room',
         name: 'Hallway',
-        description: 'A long, dim hallway. A locked door blocks the way forward.',
+        description:
+          'A long, dim hallway. A locked door blocks the way forward.',
         exits: { south: 'lab' },
       },
     },
@@ -33,8 +35,17 @@ export const world: WorldState = {
         kind: 'thing',
         name: 'Keycard',
         description: 'A small plastic keycard with a blinking red light.',
-        locationId: 'desk',       // it's ON the desk (not directly in the lab)
-        isPortable: true,         // you can pick it up
+        locationId: 'desk', // it's ON the desk (not directly in the lab)
+        isPortable: true, // you can pick it up
+        isFixed: false,
+      },
+      glizzy: {
+        id: 'glizzy',
+        kind: 'thing',
+        name: 'Glizzy',
+        description: 'A long juicy hot dog.',
+        locationId: 'lab', // it's directly in the lab (on the floor)
+        isPortable: true, // you can pick it up
         isFixed: false,
       },
     },
@@ -44,13 +55,13 @@ export const world: WorldState = {
         kind: 'container',
         name: 'Metal Closet',
         description: 'A tall metal closet with a heavy door.',
-        locationId: 'lab',        // it's IN the lab
+        locationId: 'lab', // it's IN the lab
         isPortable: false,
-        isFixed: true,            // you can't pick up a closet
-        isOpen: false,            // starts closed
-        isLocked: false,          // not locked, just closed
-        isOpaque: true,           // can't see inside when closed
-        isEnterable: true,        // an agent could go inside
+        isFixed: true, // you can't pick up a closet
+        isOpen: false, // starts closed
+        isLocked: false, // not locked, just closed
+        isOpaque: true, // can't see inside when closed
+        isEnterable: true, // an agent could go inside
       },
       door: {
         id: 'door',
@@ -61,9 +72,9 @@ export const world: WorldState = {
         isPortable: false,
         isFixed: true,
         isOpen: false,
-        isLocked: true,           // starts locked — needs keycard to open
-        isOpaque: false,          // you can see through it (glass? gap?)
-        isEnterable: false,       // can't walk through it while locked
+        isLocked: true, // starts locked — needs keycard to open
+        isOpaque: false, // you can see through it (glass? gap?)
+        isEnterable: false, // can't walk through it while locked
       },
     },
     supporters: {
@@ -84,18 +95,18 @@ export const world: WorldState = {
         kind: 'agent',
         name: 'You',
         description: 'That is you.',
-        locationId: 'lab',       // player starts in the lab
+        locationId: 'lab', // player starts in the lab
         isHidden: false,
       },
     },
   },
   containment: {
-    lab: ['desk', 'closet'],     // the lab contains the desk and closet
-    desk: ['keycard'],           // the desk has the keycard on it
-    hallway: ['door'],           // the hallway has the door
+    lab: ['desk', 'closet', 'glizzy'], // the lab contains the desk, closet, and glizzy
+    desk: ['keycard'], // the desk has the keycard on it
+    hallway: ['door'], // the hallway has the door
   },
   meta: {
     turn: 0,
     log: [],
   },
-}
+};
