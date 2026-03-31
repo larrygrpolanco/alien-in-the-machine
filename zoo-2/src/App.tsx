@@ -5,6 +5,7 @@ import { getEntity } from './world/entities'
 import { describeZone } from './world/describe'
 import { useActions } from './actions/use-actions'
 import { getAvailableActions } from './actions/available-actions'
+import { WorldMap } from './ui/world-map'
 import type { WorldState } from './types/entities'
 
 function App() {
@@ -20,6 +21,11 @@ function App() {
   return (
     <div style={{ padding: '2rem', fontFamily: 'monospace', maxWidth: '680px', margin: '0 auto' }}>
       <h1>Zoo-2 — Zones &amp; Borders</h1>
+
+      {/* Map */}
+      <div style={{ background: '#0a0a0a', border: '1px solid #333', padding: '1rem', marginBottom: '1rem' }}>
+        <WorldMap state={state} />
+      </div>
 
       {/* Zone description (the describeZone output — what Zoo-3 will feed to the LLM) */}
       <pre style={{ background: '#111', color: '#cfc', padding: '1rem', whiteSpace: 'pre-wrap', lineHeight: 1.5, border: '1px solid #333' }}>

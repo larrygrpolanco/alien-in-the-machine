@@ -53,6 +53,9 @@ New types: `Door`, `Border`, `ScopeResult`. `Room` loses `exits`. `WorldState` g
 ### Stage 5 — UI ✓
 `App.tsx` shows the `describeZone` output as the primary "view". Available actions are a numbered clickable list. Scope (reachable/perceivable split) and full world state are in collapsible debug panels.
 
+### Stage 6 — SVG World Map ✓
+`WorldMap` component (`src/ui/world-map.tsx`) renders a minimal map above the zone description. Rooms are boxes, borders are connecting lines (solid green = open, dashed orange = door), and the agent is a green dot. Layout is auto-computed from border `direction` fields via BFS. Useful for debugging agent position and border state at a glance; will be the visual layer when the LLM takes control in Zoo-3.
+
 ---
 
 ## Running
