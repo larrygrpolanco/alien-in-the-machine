@@ -31,6 +31,33 @@ Append-only. Each entry records something that changed understanding — a surpr
 
 ---
 
+## 2026-03-30 — Zoo 2 — Borders replace room.exits; doors are neither rooms nor containers
+
+**Context:** Designing the zones/borders model from the ALIEN RPG research notes. The question was whether to keep `room.exits` as a cache alongside borders, or remove it entirely.
+**What happened:** Keeping `exits` alongside `borders` would mean connectivity has two sources of truth — moveTo would need to decide which to consult, and world data could become inconsistent. Removing exits entirely forces all connectivity through one place.
+**Resolution:** Full migration. `Room` has no `exits` field. All movement, scope, and description logic reads from `state.borders`. Borders also solve the "door as entity" problem — the Door entity lives on the border, not inside any room's containment.
+**Implications:** Any code assuming `room.exits` will not compile. `moveTo` finds the border by checking `border.between.includes(roomId)`. The direction a player travels is stored in `border.direction[roomId]` — each room records how it names its side of the border.
+
+---
+
+## 2026-03-30 — Zoo 2 — Doors are reachable from both adjacent rooms
+
+**Context:** Where do doors live in scope? They're not in containment (no room "owns" a door). They need to be interactable from either side.
+**What happened:** `computeScope` was extended to iterate borders for the agent's current room. For any border of type `'door'`, the doorId is added to `reachable` — regardless of whether the door is open or locked. This lets the agent unlock/open/close a door without stepping through it.
+**Resolution:** Doors appear in `reachable` for any agent whose current room is in `border.between`. No containment entry needed for doors.
+**Implications:** `getEntity` must include the `doors` table, or door IDs in scope will return undefined. `available-actions` generates OPEN/CLOSE/UNLOCK for door entities found in reachable.
+
+---
+
+## 2026-03-30 — Zoo 2 — ScopeResult splits reachable from perceivable
+
+**Context:** With cross-zone visibility, an agent may see entities in an adjacent room but not be able to pick them up or interact with them.
+**What happened:** If `computeScope` returned a flat array like zoo-1, there would be no way to distinguish "can act on" from "can see through the doorway." `describeZone` needs to describe visible-but-unreachable entities; `getAvailableActions` must not generate actions for them.
+**Resolution:** `computeScope` returns `ScopeResult { reachable: string[], perceivable: string[] }`. All action generation uses `reachable` only. Description uses both sets.
+**Implications:** Any caller of `computeScope` that expects `string[]` will break. Both properties must be destructured. This is a clean boundary — no risk of accidentally generating actions for perceivable-only entities.
+
+---
+
 ## 2026-03-27 — Zoo 1 — TypeScript union type sorting requires explicit array types
 
 **Context:** Sorting `roomContents` into separate arrays for things, supporters, and containers in `App.tsx`.
