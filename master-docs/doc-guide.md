@@ -28,7 +28,7 @@ Each file covers a *domain*, not a *zoo* or a *time period*. A file is created w
 | `entity-model.md` | Zoo 0 | Entity kinds, properties, the normalized structure, the kind hierarchy |
 | `action-system.md` | Zoo 1 | Action registry, check/execute/report pattern, selectional restrictions, edge cases |
 | `scope-and-visibility.md` | Zoo 1 | Scope computation rules, containment, visibility through containers/supporters |
-| `room-descriptions.md` | Zoo 2 | Generating text from state, balancing narrative vs mechanical output |
+| `room-descriptions.md` | Zoo 2 | Generating structured sectioned text from state, format decisions |
 | `llm-integration.md` | Zoo 3 | Prompt structure, response parsing, what context the LLM needs, failure modes |
 | `memory-and-context.md` | Zoo 4 | Agent memory format, context window management, summarization strategies |
 | `multi-agent.md` | Zoo 5 | Per-agent state, turn systems, information asymmetry, scope partitioning |

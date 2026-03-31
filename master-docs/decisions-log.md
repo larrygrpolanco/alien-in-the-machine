@@ -58,6 +58,15 @@ Append-only. Each entry records something that changed understanding — a surpr
 
 ---
 
+## 2026-03-31 — Zoo 2 — Sectioned description format replaces prose
+
+**Context:** `describeZone` was generating narrative prose ("You are in the Laboratory. Against the far wall stands..."). This works for a human playing Zork but requires the LLM to parse sentences back into a mental model of entity relationships.
+**What happened:** The flat prose format mixed furniture, exits, and inventory into a single stream of sentences. For the LLM (especially weaker models), this is noise. The player also benefits from scannability over atmosphere.
+**Resolution:** `describeZone` now produces sectioned output: HEADER (room name), one-line atmosphere, FURNITURE (supporters with contents, containers with state), EXITS (borders with visible adjacent contents), INVENTORY. Hidden agents get a minimal `=== INSIDE X ===` view.
+**Implications:** All description tests updated. The format is more mechanical but unambiguous — "On it:" directly maps containment, "(closed)" maps state, "→ RoomName" maps destinations. This should make Zoo 3's LLM integration more reliable, especially with weaker models. Master docs updated: `room-descriptions.md` created, `scope-and-visibility.md` updated.
+
+---
+
 ## 2026-03-27 — Zoo 1 — TypeScript union type sorting requires explicit array types
 
 **Context:** Sorting `roomContents` into separate arrays for things, supporters, and containers in `App.tsx`.

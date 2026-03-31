@@ -46,7 +46,7 @@ New types: `Door`, `Border`, `ScopeResult`. `Room` loses `exits`. `WorldState` g
 - Hidden agents: scope limited to container contents only; no borders visible
 
 ### Stage 4 — Description layer ✓
-- `describeZone(state, agentId)`: narrative text of current zone + visible adjacent zones
+- `describeZone(state, agentId)`: structured, sectioned text output (HEADER, FURNITURE, EXITS, INVENTORY). Optimized for LLM comprehension and human scannability.
 - `listAvailableActions(state, agentId)`: structured action list (re-export of `getAvailableActions`)
 - Both functions live in `src/world/describe.ts` — Zoo-3 imports from here for prompt construction
 
@@ -77,12 +77,12 @@ bun run dev    # visual manual test in browser
 
 ## Manual Test Scenario
 
-1. Start in Lab — see desk with Keycard + Biosample, closed Metal Closet, locked Security Door to north.
-2. Take Keycard. Available actions now include "Unlock Security Door".
-3. Unlock Security Door. Then open it. `describeZone` now shows "Through the open door..." — Corridor is perceivable.
-4. Move north to Corridor. Can now see Lab (through open door, south) and Storage (open border, east).
+1. Start in Lab — see `=== LABORATORY ===` header, FURNITURE section with Heavy Desk (Keycard, Biosample Vial) and Metal Closet (closed), EXITS section with Security Door (locked).
+2. Take Keycard. INVENTORY section now shows Keycard. Available actions include "Unlock Security Door".
+3. Unlock Security Door. Then open it. EXITS section now shows `Security Door (open) → Maintenance Corridor`.
+4. Move north to Corridor. Can see Lab (through open door, south) and Storage (open border, east). EXITS shows Visible sub-lines for both directions.
 5. Move east to Storage. Take Biosample if you brought it; put it in Specimen Box.
-6. Return to Lab. Open Metal Closet. Hide inside. Scope collapses to closet interior only.
+6. Return to Lab. Open Metal Closet. Hide inside. View collapses to `=== INSIDE METAL CLOSET ===`.
 
 ---
 
@@ -95,3 +95,5 @@ bun run dev    # visual manual test in browser
 **Why `perceivable` vs `reachable`?** Seeing something and being able to act on it are different. You can see the Specimen Box through the open corridor from Corridor, but you'd need to walk into Storage to pick it up. The LLM needs both pieces of information: the description (what you see) and the action list (what you can do).
 
 **Why `describeZone` and not `describeRoom`?** When borders are open, the output spans multiple zones. The name reflects the function's actual scope.
+
+**Why sectioned output?** The format uses labeled sections (HEADER, FURNITURE, EXITS, INVENTORY) instead of narrative prose. This makes relationships explicit — "On it:" shows containment, "(closed)" shows state, "→ RoomName" shows destination. Both the LLM and human players can scan the output instantly. Prose is reduced to a single atmosphere line.

@@ -236,17 +236,24 @@ Each zoo is self-contained: a world definition (JSON), the action system, and a 
 **Example output:**
 
 ```
-You are in the Laboratory. A fluorescent light buzzes overhead. 
-Against the far wall stands an old wooden desk. On the desk: a keycard and a half-empty coffee mug. 
-To your left is a tall metal closet (closed). 
-The door to the north leads to the Hallway.
+=== LABORATORY ===
+A cramped research lab with flickering fluorescent lights. A heavy desk dominates one wall. A metal closet stands in the corner.
+
+FURNITURE:
+  Heavy Desk — On it: Keycard, Biosample Vial
+  Metal Closet (closed)
+
+EXITS:
+  north: Security Door (locked)
+
+INVENTORY:
+  Keycard
 
 Available actions:
-1. search(desk_1) — Search the old wooden desk for items
-2. take(keycard_1) — Pick up the keycard
-3. take(mug_1) — Pick up the coffee mug
-4. open(closet_1) — Open the metal closet
-5. move_to(hallway) — Go north to the Hallway
+1. take(keycard) — Take Keycard
+2. take(biosample) — Take Biosample Vial
+3. open(metal_closet) — Open Metal Closet
+4. unlock(north_door) — Unlock Security Door with Keycard
 ```
 
 **What you learn:**
@@ -254,7 +261,7 @@ Available actions:
 - Whether the action list generation is intuitive
 - How much context is "enough" for an LLM to make sensible decisions (this directly shapes Zoo 3)
 
-**Design note on linguistic register:** The room description and the action list serve different purposes. The description is *narrative* — it sets a scene for the agent's "imagination." The action list is *mechanical* — it's the API the agent calls. Keep these distinct. The LLM reads the prose to understand its situation; it responds by selecting from the structured action list.
+**Design note on linguistic register:** The room description and the action list serve different purposes. Zoo-2 uses a sectioned format (HEADER, FURNITURE, EXITS, INVENTORY) that is structured and scannable rather than narrative prose. This makes entity relationships explicit — "On it:" for containment, "(closed/locked/open)" for state, "→ RoomName" for destinations. The LLM reads the sections to understand its situation; it responds by selecting from the structured action list. Prose is reduced to a single atmosphere line under the header.
 
 
 ### Zoo 3 — First LLM Agent

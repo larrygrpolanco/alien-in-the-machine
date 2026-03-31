@@ -2,16 +2,17 @@ import type { WorldState } from '../types/entities'
 import { computeScope } from './scope'
 import { getEntity } from './entities'
 
-// describeZone renders a natural language description of what the agent perceives.
+// describeZone renders a structured, scannable description of what the agent perceives.
 //
-// Unlike zoo-1 which had no description layer, zoo-2 produces text ready for
-// a human (or LLM in zoo-3) to read. It covers:
-//   - The agent's current zone (room name, room description, contents)
-//   - Adjacent zones visible through open borders / open doors (perceivable scope)
-//   - Borders and their current state (locked door, open corridor, etc.)
+// Output is sectioned, not prose-heavy. Each section serves a clear purpose:
+//   HEADER     — where you are
+//   ATMOSPHERE — one-line room description (flavor, not mechanical)
+//   FURNITURE  — supporters and containers in the room, with contents/state
+//   EXITS      — borders, their state, and visible contents through open borders
+//   INVENTORY  — what the agent is carrying
 //
-// The name is "describeZone" rather than "describeRoom" because the output
-// spans multiple zones whenever perception crosses a border.
+// This format is optimized for LLM comprehension and human scannability.
+// Prose is minimized to a single atmosphere line — the structure carries the information.
 export function describeZone(state: WorldState, agentId: string): string {
   const agent = state.entities.agents[agentId]
   if (!agent) return ''
@@ -20,21 +21,52 @@ export function describeZone(state: WorldState, agentId: string): string {
   if (agent.isHidden) {
     const container = state.entities.containers[agent.locationId]
     if (!container) return ''
-    return `You are inside the ${container.name}. It is close and dark.`
+    const lines: string[] = []
+    lines.push(`=== INSIDE ${container.name.toUpperCase()} ===`)
+    const inside = (state.containment[agent.locationId] || [])
+      .filter(id => id !== agentId)
+      .map(id => getEntity(state, id))
+      .filter(Boolean)
+    if (inside.length > 0) {
+      lines.push(inside.map(e => e!.name).join(', '))
+    } else {
+      lines.push('Nothing else here.')
+    }
+    return lines.join('\n')
   }
 
   const room = state.entities.rooms[agent.locationId]
   if (!room) return ''
 
   const { reachable, perceivable } = computeScope(state, agentId)
-  const lines: string[] = []
+  const sections: string[] = []
 
-  lines.push(`${room.name}. ${room.description}`)
+  // --- Header + atmosphere ---
+  sections.push(`=== ${room.name.toUpperCase()} ===`)
+  sections.push(room.description)
 
-  // --- Current room contents ---
-  const roomContents = state.containment[room.id] || []
+  // --- Furniture: supporters and containers ---
+  const furniture = describeFurniture(state, room.id, reachable)
+  if (furniture) sections.push(furniture)
+
+  // --- Exits: borders with visible contents ---
+  const exits = describeExits(state, room.id, perceivable)
+  if (exits) sections.push(exits)
+
+  // --- Inventory ---
+  const inventory = describeInventory(state, agentId)
+  if (inventory) sections.push(inventory)
+
+  return sections.join('\n\n')
+}
+
+// describeFurniture lists supporters and containers in the room.
+// Each supporter shows what's on it. Each container shows its state (open/closed/locked).
+function describeFurniture(state: WorldState, roomId: string, reachable: string[]): string | null {
+  const roomContents = state.containment[roomId] || []
+  const furnitureItems: string[] = []
+
   for (const id of roomContents) {
-    if (id === agentId) continue
     const entity = getEntity(state, id)
     if (!entity) continue
 
@@ -43,77 +75,121 @@ export function describeZone(state: WorldState, agentId: string): string {
         .map(cid => getEntity(state, cid))
         .filter(Boolean)
       if (onTop.length > 0) {
-        lines.push(`On the ${entity.name}: ${onTop.map(e => e!.name).join(', ')}.`)
+        furnitureItems.push(`${entity.name} — On it: ${onTop.map(e => e!.name).join(', ')}`)
       } else {
-        lines.push(`The ${entity.name} is here, empty.`)
+        furnitureItems.push(`${entity.name} (empty)`)
       }
     } else if (entity.kind === 'container') {
       const stateStr = entity.isLocked ? 'locked' : (entity.isOpen ? 'open' : 'closed')
-      lines.push(`The ${entity.name} is ${stateStr}.`)
+      const parts = [entity.name, `(${stateStr})`]
       if (entity.isOpen) {
         const inside = (state.containment[id] || [])
           .map(cid => getEntity(state, cid))
           .filter(Boolean)
         if (inside.length > 0) {
-          lines.push(`  Inside: ${inside.map(e => e!.name).join(', ')}.`)
+          parts.push(`— Inside: ${inside.map(e => e!.name).join(', ')}`)
         }
       }
-    } else if (entity.kind === 'thing') {
-      lines.push(`A ${entity.name} is here.`)
-    } else if (entity.kind === 'agent' && id !== agentId) {
-      lines.push(`${entity.name} is here.`)
+      furnitureItems.push(parts.join(' '))
     }
   }
 
-  // --- Inventory ---
-  const inventory = Object.values(state.entities.things).filter(t => t.locationId === agentId)
-  if (inventory.length > 0) {
-    lines.push(`You are carrying: ${inventory.map(t => t.name).join(', ')}.`)
-  }
+  if (furnitureItems.length === 0) return null
 
-  // --- Borders: exits, doors, and cross-zone visibility ---
+  const lines = ['FURNITURE:']
+  for (const item of furnitureItems) {
+    lines.push(`  ${item}`)
+  }
+  return lines.join('\n')
+}
+
+// describeExits lists borders from the current room.
+// For open borders or open doors, shows visible contents in the adjacent room.
+function describeExits(state: WorldState, roomId: string, perceivable: string[]): string | null {
+  const exitLines: string[] = []
+
   for (const border of state.borders) {
-    if (!border.between.includes(room.id)) continue
-    const adjacentRoomId = border.between[0] === room.id ? border.between[1] : border.between[0]
+    if (!border.between.includes(roomId)) continue
+    const adjacentRoomId = border.between[0] === roomId ? border.between[1] : border.between[0]
     const adjacentRoom = state.entities.rooms[adjacentRoomId]
-    const direction = border.direction[room.id]
+    const direction = border.direction[roomId]
 
     if (border.type === 'open') {
-      lines.push(`To the ${direction}: an open passage leads to the ${adjacentRoom?.name}.`)
-
-      // Describe what's visible through the open border
+      const parts = [`${direction}: Open passage → ${adjacentRoom?.name}`]
       const adjVisible = (state.containment[adjacentRoomId] || [])
         .filter(id => perceivable.includes(id))
         .map(id => getEntity(state, id))
         .filter(Boolean)
       if (adjVisible.length > 0) {
-        lines.push(`  Through the passage you can see: ${adjVisible.map(e => e!.name).join(', ')}.`)
+        exitLines.push(parts.join(''))
+        exitLines.push(`  Visible: ${describeVisibleEntities(adjVisible, state, adjacentRoomId)}`)
       } else {
-        lines.push(`  Through the passage, the ${adjacentRoom?.name} looks empty.`)
+        exitLines.push(parts.join('') + ' (empty)')
       }
     } else if (border.type === 'door' && border.doorId) {
       const door = state.entities.doors[border.doorId]
       if (!door) continue
       const doorStateStr = door.isLocked ? 'locked' : (door.isOpen ? 'open' : 'closed')
-      lines.push(`To the ${direction}: ${door.name} (${doorStateStr}).`)
 
       if (door.isOpen) {
+        const parts = [`${direction}: ${door.name} (${doorStateStr}) → ${adjacentRoom?.name}`]
         const adjVisible = (state.containment[adjacentRoomId] || [])
           .filter(id => perceivable.includes(id))
           .map(id => getEntity(state, id))
           .filter(Boolean)
+        exitLines.push(parts.join(''))
         if (adjVisible.length > 0) {
-          lines.push(`  Through the open door you can see: ${adjVisible.map(e => e!.name).join(', ')}.`)
+          exitLines.push(`  Visible: ${describeVisibleEntities(adjVisible, state, adjacentRoomId)}`)
         } else {
-          lines.push(`  Through the open door, the ${adjacentRoom?.name} appears empty.`)
+          exitLines.push(`  (nothing visible)`)
         }
+      } else {
+        exitLines.push(`${direction}: ${door.name} (${doorStateStr})`)
       }
-    } else if (border.type === 'wall') {
-      // Walls are not listed — they're just absence of passage.
     }
+    // Walls are omitted — no passage, no sight.
   }
 
+  if (exitLines.length === 0) return null
+
+  const lines = ['EXITS:']
+  for (const line of exitLines) {
+    lines.push(`  ${line}`)
+  }
   return lines.join('\n')
+}
+
+// describeVisibleEntities formats entities visible through a border.
+// Handles supporters (showing what's on them) and containers (showing state).
+function describeVisibleEntities(entities: ReturnType<typeof getEntity>[], state: WorldState, adjacentRoomId: string): string {
+  const parts: string[] = []
+  for (const entity of entities) {
+    if (!entity) continue
+    if (entity.kind === 'supporter') {
+      const onTop = (state.containment[entity.id] || [])
+        .map(cid => getEntity(state, cid))
+        .filter(Boolean)
+      if (onTop.length > 0) {
+        parts.push(`${entity.name} (on it: ${onTop.map(e => e!.name).join(', ')})`)
+      } else {
+        parts.push(`${entity.name} (empty)`)
+      }
+    } else if (entity.kind === 'container') {
+      const stateStr = entity.isLocked ? 'locked' : (entity.isOpen ? 'open' : 'closed')
+      parts.push(`${entity.name} (${stateStr})`)
+    } else {
+      parts.push(entity.name)
+    }
+  }
+  return parts.join(', ')
+}
+
+// describeInventory lists items carried by the agent.
+function describeInventory(state: WorldState, agentId: string): string | null {
+  const inventory = Object.values(state.entities.things).filter(t => t.locationId === agentId)
+  if (inventory.length === 0) return null
+
+  return `INVENTORY:\n  ${inventory.map(t => t.name).join(', ')}`
 }
 
 // listAvailableActions returns AvailableAction[] formatted for LLM or UI display.

@@ -14,45 +14,53 @@ function freshWorld(): WorldState {
 }
 
 describe('describeZone', () => {
-  it('describes the current room name and description', () => {
+  it('describes the current room header and atmosphere', () => {
     const state = freshWorld()
     const text = describeZone(state, 'player')
-    expect(text).toContain('Laboratory')
+    expect(text).toContain('=== LABORATORY ===')
     expect(text).toContain('fluorescent')
   })
 
-  it('describes a supporter and its contents', () => {
+  it('has a FURNITURE section with supporter and its contents', () => {
     const state = freshWorld()
     const text = describeZone(state, 'player')
+    expect(text).toContain('FURNITURE:')
     expect(text).toContain('Heavy Desk')
     expect(text).toContain('Keycard')
     expect(text).toContain('Biosample Vial')
   })
 
-  it('describes a closed locked door to the north', () => {
+  it('describes a closed locked container in FURNITURE', () => {
     const state = freshWorld()
     const text = describeZone(state, 'player')
-    expect(text).toContain('north')
-    expect(text).toContain('Security Door')
-    expect(text).toContain('locked')
+    expect(text).toContain('Metal Closet')
+    expect(text).toContain('(closed)')
   })
 
-  it('does not describe corridor contents when door is closed', () => {
+  it('has an EXITS section with the locked security door', () => {
+    const state = freshWorld()
+    const text = describeZone(state, 'player')
+    expect(text).toContain('EXITS:')
+    expect(text).toContain('north')
+    expect(text).toContain('Security Door')
+    expect(text).toContain('(locked)')
+  })
+
+  it('does not show corridor contents when door is closed', () => {
     const state = freshWorld()
     const text = describeZone(state, 'player')
     expect(text).not.toContain('Maintenance Corridor')
   })
 
-  it('describes corridor as visible once door is open', () => {
+  it('shows corridor as visible once door is open', () => {
     const state = freshWorld()
     const afterTake = take(state, 'player', 'keycard')
     const afterUnlock = unlock(afterTake.state, 'player', 'north_door')
     const afterOpen = open(afterUnlock.state, 'north_door')
     const text = describeZone(afterOpen.state, 'player')
     expect(text).toContain('Security Door')
-    expect(text).toContain('open')
-    // Corridor is now visible through open door — door state should mention open
-    expect(text).toContain('Through the open door')
+    expect(text).toContain('(open)')
+    expect(text).toContain('Maintenance Corridor')
   })
 
   it('describes storage through open corridor border', () => {
@@ -62,10 +70,9 @@ describe('describeZone', () => {
     const afterOpenDoor = open(afterUnlock.state, 'north_door')
     const inCorridor = moveTo(afterOpenDoor.state, 'player', 'corridor')
     const text = describeZone(inCorridor.state, 'player')
-    expect(text).toContain('Maintenance Corridor')
+    expect(text).toContain('=== MAINTENANCE CORRIDOR ===')
     expect(text).toContain('east')
     expect(text).toContain('Storage Bay')
-    // specimen_box is perceivable through open border
     expect(text).toContain('Specimen Box')
   })
 
@@ -74,8 +81,21 @@ describe('describeZone', () => {
     const opened = open(state, 'metal_closet')
     const hidden = hideIn(opened.state, 'player', 'metal_closet')
     const text = describeZone(hidden.state, 'player')
-    expect(text).toContain('Metal Closet')
-    expect(text).toContain('inside')
+    expect(text).toContain('=== INSIDE METAL CLOSET ===')
+  })
+
+  it('shows INVENTORY section when carrying items', () => {
+    const state = freshWorld()
+    const afterTake = take(state, 'player', 'keycard')
+    const text = describeZone(afterTake.state, 'player')
+    expect(text).toContain('INVENTORY:')
+    expect(text).toContain('Keycard')
+  })
+
+  it('omits INVENTORY section when carrying nothing', () => {
+    const state = freshWorld()
+    const text = describeZone(state, 'player')
+    expect(text).not.toContain('INVENTORY:')
   })
 })
 
@@ -113,7 +133,6 @@ describe('getAvailableActions', () => {
   })
 
   it('includes putIn when holding an item and an open container is reachable', () => {
-    // Travel to storage and check putIn is available for specimen_box
     const state = freshWorld()
     const afterTake = take(state, 'player', 'keycard')
     const afterTake2 = take(afterTake.state, 'player', 'biosample')
